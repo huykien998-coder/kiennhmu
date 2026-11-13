@@ -1,0 +1,2104 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sa Hình Vuông 3D & Phòng Thi Thử - 600 Câu Hỏi Sát Hạch Lái Xe</title>
+  <style>
+    :root {
+      --bg-dark: rgba(10, 14, 26, 0.92);
+      --bg-card: rgba(15, 23, 42, 0.96);
+      --accent: #f59e0b;
+      --accent-hover: #d97706;
+      --blue: #3b82f6;
+      --green: #10b981;
+      --red: #ef4444;
+      --purple: #8b5cf6;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: rgba(255, 255, 255, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #060913;
+      color: var(--text);
+    }
+
+    #canvas-container {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+    }
+
+    /* Splash Screen */
+    #splash-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: radial-gradient(circle at center, rgba(15, 23, 42, 0.88), rgba(2, 6, 23, 0.98));
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+      backdrop-filter: blur(12px);
+      transition: opacity 0.35s ease;
+    }
+    #splash-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .splash-badge {
+      background: rgba(245, 158, 11, 0.18);
+      color: var(--accent);
+      border: 1px solid rgba(245, 158, 11, 0.45);
+      padding: 6px 16px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+    .splash-title {
+      font-size: clamp(25px, 4vw, 40px);
+      font-weight: 800;
+      margin-bottom: 10px;
+      background: linear-gradient(90deg, #fff, #fbbf24, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .splash-sub {
+      color: var(--text-muted);
+      max-width: 650px;
+      font-size: 14px;
+      line-height: 1.55;
+      margin-bottom: 24px;
+    }
+    .splash-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 8px 13px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-dark);
+      color: var(--text);
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      backdrop-filter: blur(8px);
+    }
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.14);
+      transform: translateY(-1px);
+    }
+    .btn.active {
+      background: var(--blue);
+      border-color: #60a5fa;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #0f172a;
+      border-color: var(--accent);
+      font-weight: 700;
+    }
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      color: #fff;
+    }
+    .btn-success {
+      background: rgba(16, 185, 129, 0.22);
+      border-color: var(--green);
+      color: #6ee7b7;
+    }
+    .btn-exam {
+      background: linear-gradient(135deg, #f59e0b, #ef4444);
+      color: #fff;
+      border: none;
+      font-weight: 800;
+    }
+
+    /* Top UI */
+    #top-ui {
+      position: fixed;
+      top: 10px;
+      left: 12px;
+      right: 12px;
+      z-index: 10;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      pointer-events: none;
+    }
+    .ui-group {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex-wrap: wrap;
+      background: var(--bg-dark);
+      padding: 7px 11px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+    }
+    .brand-title {
+      font-weight: 800;
+      font-size: 13.5px;
+      color: #fbbf24;
+    }
+    .brand-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Zone Quick-Switch Bar (Bấm vào chuyển câu hỏi ngay) */
+    #filter-bar {
+      position: fixed;
+      top: 64px;
+      left: 12px;
+      z-index: 10;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      max-width: calc(100vw - 510px);
+      pointer-events: auto;
+    }
+    .chip {
+      padding: 6px 11px;
+      border-radius: 8px;
+      font-size: 11.5px;
+      font-weight: 700;
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .chip.active, .chip:hover {
+      color: #fff;
+      border-color: var(--accent);
+      background: rgba(245, 158, 11, 0.25);
+    }
+    .chip.exam-chip {
+      border-color: #f43f5e;
+      color: #fda4af;
+      background: rgba(244, 63, 94, 0.18);
+    }
+    .chip.exam-chip.active {
+      background: #e11d48;
+      color: #fff;
+    }
+
+    /* Bottom Guide */
+    #bottom-guide {
+      position: fixed;
+      bottom: 12px;
+      left: 12px;
+      z-index: 10;
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      color: var(--text-muted);
+      pointer-events: none;
+      backdrop-filter: blur(8px);
+    }
+
+    /* Quiz & Mock Exam Drawer (Luôn mở và chuyển ngay khi bấm khu vực) */
+    #quiz-drawer {
+      position: fixed;
+      top: 64px;
+      right: 12px;
+      bottom: 12px;
+      width: min(95vw, 480px);
+      z-index: 20;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(14px);
+    }
+    .quiz-header {
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .quiz-header h3 {
+      font-size: 13.5px;
+      color: #fbbf24;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .q-jump-select {
+      background: rgba(15, 23, 42, 0.95);
+      color: #fff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 12px;
+      max-width: 150px;
+    }
+
+    /* Thanh đồng hồ & lưới câu hỏi khi ở Chế độ Thi Thử */
+    #exam-bar {
+      display: none;
+      padding: 10px 14px;
+      background: rgba(225, 29, 72, 0.16);
+      border-bottom: 1px solid rgba(244, 63, 94, 0.35);
+      flex-direction: column;
+      gap: 8px;
+    }
+    #exam-bar.active {
+      display: flex;
+    }
+    .exam-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12.5px;
+      font-weight: 700;
+    }
+    .exam-timer {
+      color: #fde047;
+      font-size: 14px;
+      font-weight: 800;
+      background: rgba(0,0,0,0.4);
+      padding: 3px 9px;
+      border-radius: 6px;
+    }
+    .exam-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      max-height: 68px;
+      overflow-y: auto;
+    }
+    .exam-dot {
+      width: 26px;
+      height: 24px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.06);
+      color: #cbd5e1;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .exam-dot.current {
+      border-color: #fbbf24;
+      background: rgba(245, 158, 11, 0.35);
+      color: #fff;
+    }
+    .exam-dot.answered {
+      background: rgba(59, 130, 246, 0.35);
+      border-color: #60a5fa;
+      color: #fff;
+    }
+    .exam-dot.correct-dot {
+      background: rgba(16, 185, 129, 0.4);
+      border-color: #10b981;
+    }
+    .exam-dot.wrong-dot {
+      background: rgba(239, 68, 68, 0.45);
+      border-color: #ef4444;
+    }
+
+    .quiz-body {
+      padding: 14px;
+      overflow-y: auto;
+      flex: 1;
+      user-select: text;
+    }
+    .q-meta {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+    .q-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 5px;
+      background: rgba(59, 130, 246, 0.22);
+      color: #60a5fa;
+    }
+    .q-badge.critical {
+      background: rgba(239, 68, 68, 0.25);
+      color: #fca5a5;
+      border: 1px solid var(--red);
+    }
+    .q-badge.sim3d {
+      background: rgba(16, 185, 129, 0.22);
+      color: #6ee7b7;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+    .q-text {
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.5;
+      margin-bottom: 10px;
+    }
+
+    /* Hộp điều khiển Mô phỏng 3D chính xác cho từng câu */
+    .q-3d-box {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(30, 41, 59, 0.92));
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+    }
+    .q-3d-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+      font-size: 11.5px;
+      color: #38bdf8;
+      font-weight: 700;
+    }
+    .q-3d-detail {
+      font-size: 12px;
+      color: #e2e8f0;
+      line-height: 1.45;
+      background: rgba(0, 0, 0, 0.35);
+      padding: 7px 10px;
+      border-radius: 6px;
+      border-left: 3px solid #f59e0b;
+    }
+
+    .options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option-btn {
+      text-align: left;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.45;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .option-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .option-btn.selected-exam {
+      border-color: #fbbf24;
+      background: rgba(245, 158, 11, 0.2);
+    }
+    .option-btn.correct {
+      background: rgba(16, 185, 129, 0.24);
+      border-color: var(--green);
+      color: #a7f3d0;
+      text-decoration: underline;
+      font-weight: 600;
+    }
+    .option-btn.wrong {
+      background: rgba(239, 68, 68, 0.24);
+      border-color: var(--red);
+      color: #fecaca;
+    }
+    .explain-box {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: rgba(16, 185, 129, 0.14);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      font-size: 12.5px;
+      line-height: 1.45;
+      color: #d1fae5;
+      display: none;
+    }
+    .quiz-footer {
+      padding: 10px 14px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* 3D Floating Square Labels */
+    .zone-label {
+      position: absolute;
+      transform: translate(-50%, -100%);
+      background: rgba(11, 15, 29, 0.94);
+      border: 1.5px solid rgba(255, 255, 255, 0.28);
+      color: #fff;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 700;
+      pointer-events: auto;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: transform 0.15s, border-color 0.15s;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.6);
+    }
+    .zone-label:hover, .zone-label.active-zone {
+      border-color: var(--accent);
+      background: rgba(30, 41, 59, 0.98);
+      transform: translate(-50%, -106%) scale(1.06);
+    }
+    .zone-label span {
+      display: block;
+      font-size: 10px;
+      color: #fbbf24;
+      font-weight: 600;
+    }
+    .stage-3d-tag {
+      position: absolute;
+      transform: translate(-50%, -100%);
+      background: rgba(15, 23, 42, 0.94);
+      color: #f8fafc;
+      border: 1.5px solid #fbbf24;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      pointer-events: none;
+      white-space: nowrap;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.55);
+    }
+    #labels-layer, #stage-tags-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 5;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Màn hình chào mở đầu -->
+  <div id="splash-screen">
+    <div class="splash-badge">BỘ CÔNG AN · CỤC CẢNH SÁT GIAO THÔNG · BẢN SA HÌNH VUÔNG 3D CHÍNH XÁC</div>
+    <h1 class="splash-title">Sa Hình Ô Tô 3D & Khu Thi Thử Sát Hạch</h1>
+    <p class="splash-sub">
+      • Ngã tư Sa hình 3D và toàn bộ các phân khu thiết kế chuẩn <b>Hình Vuông</b>.<br/>
+      • Xe 3D <b>không chạy ngẫu nhiên</b>: Mỗi câu hỏi trong 600 câu đều được dựng đúng phương tiện, biển báo, vạch kẻ đường và chỉ chạy theo đúng thứ tự đáp án.<br/>
+      • Bấm vào bất kỳ Khu vực nào sẽ <b>chuyển ngay sang câu hỏi của khu vực đó</b> + Tích hợp <b>Khu Thi Thử Sát Hạch</b> có bấm giờ!
+    </p>
+    <div class="splash-actions">
+      <button class="btn btn-primary" onclick="startApp(true)">🔊 Bật âm thanh & Vào Sa Hình Vuông 3D</button>
+      <button class="btn btn-exam" onclick="startApp(true, true)">🏆 Vào Khu Thi Thử Ngay (20 Phút)</button>
+      <button class="btn" onclick="startApp(false)">🔇 Xem không tiếng</button>
+    </div>
+  </div>
+
+  <!-- Thanh điều hướng phía trên -->
+  <div id="top-ui">
+    <div class="ui-group">
+      <div>
+        <div class="brand-title">SA HÌNH VUÔNG 3D · 600 CÂU CSGT</div>
+        <div class="brand-meta" id="driver-status">Bấm vào bất kỳ Khu vực 3D nào để chuyển câu hỏi ngay lập tức</div>
+      </div>
+      <button class="btn btn-exam" onclick="selectZone('exam_zone')">🏆 Khu Thi Thử</button>
+      <button class="btn btn-success" onclick="document.getElementById('pdf-upload').click()">📄 Nạp đủ 600 câu từ PDF</button>
+      <input type="file" id="pdf-upload" accept="application/pdf" style="display:none" onchange="importFullPDF(this)" />
+    </div>
+
+    <div class="ui-group">
+      <button class="btn" id="cam-overview" onclick="setCameraMode('overview')">🌐 Toàn cảnh</button>
+      <button class="btn active" id="cam-stage3d" onclick="setCameraMode('stage3d')">🔲 Ngã tư Vuông 3D</button>
+      <button class="btn" id="cam-cockpit" onclick="setCameraMode('cockpit')">🚘 Buồng lái 3D</button>
+      <button class="btn" id="cam-top" onclick="setCameraMode('top')">⬇️ Nhìn từ trên</button>
+      <button class="btn active" id="btn-toggle-labels" onclick="toggleLabels()">🏷️ Nhãn 3D</button>
+    </div>
+  </div>
+
+  <!-- Thanh chọn nhanh Khu vực (Bấm là chuyển câu hỏi ngay) -->
+  <div id="filter-bar">
+    <div class="chip" id="chip-ch1" onclick="selectZone('ch1')">Chương I (1-180)</div>
+    <div class="chip" id="chip-ch2" onclick="selectZone('ch2')">Chương II (181-205)</div>
+    <div class="chip" id="chip-ch3" onclick="selectZone('ch3')">Chương III (206-263)</div>
+    <div class="chip" id="chip-ch4" onclick="selectZone('ch4')">Chương IV (264-300)</div>
+    <div class="chip" id="chip-ch5" onclick="selectZone('ch5')">Chương V: Biển báo (301-485)</div>
+    <div class="chip active" id="chip-ch6" onclick="selectZone('ch6')">Chương VI: Sa hình (486-600)</div>
+    <div class="chip" id="chip-critical60" onclick="selectZone('critical60')">⚠️ 60 Câu Điểm Liệt</div>
+    <div class="chip exam-chip" id="chip-exam_zone" onclick="selectZone('exam_zone')">🏆 KHU THI THỬ</div>
+  </div>
+
+  <!-- Lớp nhãn 3D nổi -->
+  <div id="labels-layer"></div>
+  <div id="stage-tags-layer"></div>
+
+  <!-- Ngăn kéo làm câu hỏi & Thi thử (Tự động chuyển ngay khi bấm khu vực) -->
+  <div id="quiz-drawer">
+    <div class="quiz-header">
+      <h3 id="qd-zone-title">Chương VI: Giải thế sa hình</h3>
+      <select id="qd-jump" class="q-jump-select" onchange="jumpToQuestion(this.value)"></select>
+    </div>
+
+    <!-- Thanh trạng thái Thi Thử (Chỉ hiện khi vào Khu Thi Thử) -->
+    <div id="exam-bar">
+      <div class="exam-top-row">
+        <span id="exam-status-text">🏆 Đề Thi Thử Sát Hạch (30 câu)</span>
+        <span class="exam-timer" id="exam-timer-display">20:00</span>
+        <div style="display:flex;gap:5px;">
+          <button class="btn btn-primary" style="padding:3px 9px;font-size:11px;" id="btn-submit-exam" onclick="submitMockExam()">Nộp bài</button>
+          <button class="btn" style="padding:3px 8px;font-size:11px;" onclick="startNewMockExam()">Đề mới</button>
+        </div>
+      </div>
+      <div class="exam-grid" id="exam-grid-dots"></div>
+    </div>
+
+    <div class="quiz-body">
+      <div class="q-meta">
+        <span class="q-badge" id="qd-num">Câu 486 / 600</span>
+        <span class="q-badge sim3d">🔲 Mô phỏng 3D Chính Xác</span>
+        <span class="q-badge critical" id="qd-critical" style="display:none">⚠️ Câu Điểm Liệt (Sai là trượt)</span>
+      </div>
+      <div class="q-text" id="qd-question">Nội dung câu hỏi...</div>
+
+      <!-- Hộp điều khiển & thuyết minh Mô hình 3D chính xác của câu hỏi -->
+      <div class="q-3d-box">
+        <div class="q-3d-header">
+          <span>🎬 Bối cảnh 3D trên Ngã tư Vuông:</span>
+          <div style="display:flex;gap:5px;">
+            <button class="btn" style="padding:3px 8px;font-size:11px;" onclick="resetCurrent3DStage()">🔄 Đặt lại vị trí</button>
+            <button class="btn btn-primary" style="padding:3px 9px;font-size:11px;" onclick="play3DTrafficAnimation()">▶️ Chạy xe theo đáp án</button>
+          </div>
+        </div>
+        <div class="q-3d-detail" id="qd-3d-desc">
+          Đang dựng mô hình 3D chính xác cho câu hỏi...
+        </div>
+      </div>
+
+      <div class="options-list" id="qd-options"></div>
+      <div class="explain-box" id="qd-explain"></div>
+    </div>
+    <div class="quiz-footer">
+      <button class="btn" onclick="prevQuestion()">◀ Câu trước</button>
+      <span id="qd-progress" style="font-size:12px;color:var(--text-muted)">1 / 15</span>
+      <button class="btn btn-primary" onclick="nextQuestion()">Câu tiếp ▶</button>
+    </div>
+  </div>
+
+  <!-- Thanh hướng dẫn dưới đáy -->
+  <div id="bottom-guide">
+    Kéo để xoay 360° · Chụm 2 ngón Trackpad để Zoom · Bấm vào bất kỳ Khu vực vuông 3D nào để chuyển ngay sang câu hỏi khu đó
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <!-- Three.js, OrbitControls & PDF.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+  <script>
+    // =========================================================================
+    // 1. NGÂN HÀNG CÂU HỎI TỪ TÀI LIỆU 600 CÂU (CÓ MÔ TẢ 3D CHÍNH XÁC TỪNG CÂU)
+    // =========================================================================
+    const ZONES_DATA = [
+      {
+        id: 'ch1',
+        name: 'Chương I: Quy định chung & Quy tắc giao thông',
+        shortName: '🟦 Chương I: Quy tắc GT',
+        range: 'Câu 1 - 180',
+        color: 0x3b82f6,
+        vehicleType: 'police_podium',
+        pos: { x: -34, y: 0, z: -22 },
+        desc: '180 câu (từ câu 1 đến 180): Quy định chung, phần đường xe chạy, làn đường, hiệu lệnh CSGT, tốc độ, khoảng cách an toàn, đường cao tốc.',
+        questions: [
+          { num: 1, critical: false, q: 'Câu 1. Phần của đường bộ được sử dụng cho phương tiện giao thông đường bộ đi lại là gì?', options: ['1. Phần mặt đường và lề đường.', '2. Phần đường xe chạy.', '3. Phần đường xe cơ giới.'], correct: 1, explain: 'Đáp án đúng: Ý 2 (Phần đường xe chạy).' },
+          { num: 2, critical: false, q: 'Câu 2. Làn đường là gì?', options: ['1. Là một phần của phần đường xe chạy được chia theo chiều dọc của đường, sử dụng cho xe chạy.', '2. Là một phần của phần đường xe chạy được chia theo chiều dọc của đường, có đủ chiều rộng cho xe chạy an toàn.', '3. Là đường cho xe ô tô chạy, dừng, đỗ an toàn.'], correct: 1, explain: 'Đáp án đúng: Ý 2 (Chia theo chiều dọc của đường, có đủ chiều rộng cho xe chạy an toàn).' },
+          { num: 3, critical: false, q: 'Câu 3. Khổ giới hạn của đường bộ được hiểu như thế nào là đúng?', options: ['1. Khổ giới hạn của đường bộ là khoảng trống có kích thước giới hạn về chiều rộng, chiều cao của đường bộ để các xe, bao gồm cả hàng hoá xếp trên xe đi qua được an toàn và được xác định theo quy chuẩn, tiêu chuẩn kỹ thuật của đường bộ.', '2. Là khoảng trống có kích thước giới hạn về chiều rộng của đường, cầu, bến phà.', '3. Là khoảng trống có kích thước giới hạn về chiều cao của cầu, bến phà.'], correct: 0, explain: 'Đáp án đúng: Ý 1 (Giới hạn về cả chiều rộng và chiều cao của đường bộ).' },
+          { num: 4, critical: false, q: 'Câu 4. Dải phân cách được lắp đặt để làm gì?', options: ['1. Để phân chia các làn đường dành cho xe cơ giới và xe thô sơ trên đường cao tốc.', '2. Để phân chia phần đường xe chạy thành hai chiều riêng biệt hoặc để phân chia phần đường dành cho xe cơ giới và xe thô sơ hoặc của nhiều loại xe khác nhau trên cùng một chiều đường.', '3. Để phân tách phần đường xe chạy và hành lang an toàn giao thông.'], correct: 1, explain: 'Đáp án đúng: Ý 2.' },
+          { num: 5, critical: false, q: 'Câu 5. Vạch kẻ đường là gì?', options: ['1. Là báo hiệu đường bộ để hỗ trợ cảnh báo nguy hiểm.', '2. Là vạch chỉ sự phân chia làn đường, vị trí hoặc hướng đi, vị trí dừng lại.', '3. Là báo hiệu cho người tham gia giao thông về các thông tin của đường bộ.', '4. Cả ba ý trên.'], correct: 1, explain: 'Đáp án đúng: Ý 2.' },
+          { num: 24, critical: true, q: 'Câu 24. Người điều khiển phương tiện tham gia giao thông đường bộ mà trong máu hoặc hơi thở có nồng độ cồn có bị nghiêm cấm không?', options: ['1. Bị nghiêm cấm.', '2. Không bị nghiêm cấm.', '3. Không bị nghiêm cấm, nếu nồng độ cồn trong máu ở mức nhẹ.'], correct: 0, explain: 'Đáp án đúng: Ý 1 (Bị nghiêm cấm tuyệt đối).' },
+          { num: 36, critical: false, q: 'Câu 36. Khi gặp hiệu lệnh điều khiển của Cảnh sát giao thông như hình dưới đây (hai tay giang ngang) thì người tham gia giao thông đường bộ phải đi như thế nào là đúng quy tắc giao thông?', options: ['1. Người tham gia giao thông đường bộ ở các hướng phải dừng lại.', '2. Người tham gia giao thông đường bộ ở các hướng được đi theo chiều gậy chỉ của Cảnh sát giao thông.', '3. Người tham gia giao thông đường bộ ở phía trước và phía sau người điều khiển được đi tất cả các hướng; bên phải và bên trái phải dừng lại.', '4. Người tham gia giao thông đường bộ ở phía trước và phía sau người điều khiển phải dừng lại; người tham gia giao thông đường bộ ở phía bên phải và phía bên trái người điều khiển được đi tất cả các hướng.'], correct: 3, explain: 'Đáp án đúng: Ý 4 (Trước mặt và sau lưng CSGT phải dừng lại; bên phải và bên trái CSGT được đi tất cả các hướng).' },
+          { num: 37, critical: false, q: 'Câu 37. Khi gặp hiệu lệnh điều khiển của Cảnh sát giao thông như hình dưới đây (tay giơ thẳng đứng) thì người tham gia giao thông đường bộ phải đi như thế nào là đúng quy tắc giao thông?', options: ['1. Người tham gia giao thông đường bộ ở phía sau Cảnh sát giao thông được đi.', '2. Người tham gia giao thông đường bộ được rẽ phải theo chiều mũi tên.', '3. Người tham gia giao thông đường bộ ở tất cả các hướng phải dừng lại, trừ các xe đã ở trong khu vực giao nhau.', '4. Người tham gia giao thông ở phía trước CSGT phải dừng lại, các hướng khác được đi.'], correct: 2, explain: 'Đáp án đúng: Ý 3 (Tất cả các hướng phải dừng lại, trừ các xe đã ở trong khu vực giao nhau).' },
+          { num: 42, critical: false, q: 'Câu 42. Khi chở trẻ em dưới 10 tuổi và chiều cao dưới 1,35 mét trên xe ô tô, người lái xe phải thực hiện quy tắc nào dưới đây để bảo đảm an toàn?', options: ['1. Không được cho trẻ em ngồi cùng hàng ghế với người lái xe, trừ loại xe ô tô chỉ có một hàng ghế; người lái xe phải sử dụng, hướng dẫn sử dụng thiết bị an toàn phù hợp cho trẻ em.', '2. Cho trẻ em ngồi cùng hàng ghế với người lái xe.'], correct: 0, explain: 'Đáp án đúng: Ý 1.' },
+          { num: 92, critical: false, q: 'Câu 92. Tại nơi đường giao nhau có báo hiệu đi theo vòng xuyến, người lái xe phải nhường đường như thế nào là đúng quy tắc giao thông?', options: ['1. Nhường đường cho xe đi đến từ bên phải.', '2. Nhường đường cho xe đi đến từ bên trái.', '3. Không phải nhường đường.'], correct: 1, explain: 'Đáp án đúng: Ý 2 (Có báo hiệu đi theo vòng xuyến: nhường đường cho xe đi đến từ bên trái).' },
+          { num: 93, critical: false, q: 'Câu 93. Tại nơi đường giao nhau không có báo hiệu đi theo vòng xuyến, người điều khiển phương tiện phải nhường đường như thế nào là đúng quy tắc giao thông?', options: ['1. Phải nhường đường cho xe đi đến từ bên phải.', '2. Xe báo hiệu xin đường trước, xe đó được đi trước.', '3. Phải nhường đường cho xe đi đến từ bên trái.'], correct: 0, explain: 'Đáp án đúng: Ý 1 (Không có vòng xuyến: nhường đường cho xe đi đến từ bên phải).' },
+          { num: 114, critical: true, q: 'Câu 114. Khi xe gặp sự cố kỹ thuật trên đường cao tốc, bạn phải xử lý như thế nào để bảo đảm an toàn giao thông?', options: ['1. Bật đèn tín hiệu khẩn cấp, dừng xe ngay lập tức.', '2. Bật tín hiệu khẩn cấp, đưa xe vào làn chạy bên phải.', '3. Dừng xe, đỗ xe ở làn dừng khẩn cấp cùng chiều xe chạy và phải có báo hiệu bằng đèn khẩn cấp; trường hợp xe không thể di chuyển được vào làn dừng khẩn cấp, phải có báo hiệu bằng đèn khẩn cấp và đặt biển hoặc đèn cảnh báo về phía sau xe khoảng cách tối thiểu 150 mét.'], correct: 2, explain: 'Đáp án đúng: Ý 3 (Đưa vào làn dừng khẩn cấp, bật đèn khẩn cấp, đặt biển cảnh báo phía sau tối thiểu 150 mét).' },
+          { num: 117, critical: true, q: 'Câu 117. Khi chuẩn bị nhập vào làn đường của đường cao tốc, người lái xe phải thực hiện như thế nào là đúng quy tắc giao thông?', options: ['1. Có tín hiệu xin vào và phải nhường đường cho xe đang chạy trên đường.', '2. Quan sát xe phía sau bảo đảm khoảng cách an toàn mới cho xe nhập vào làn đường sát bên phải.', '3. Nếu có làn đường tăng tốc thì phải cho xe chạy trên làn đường đó trước khi nhập vào làn đường của đường cao tốc.', '4. Cả ba ý trên.'], correct: 3, explain: 'Đáp án đúng: Ý 4 (Cả ba ý trên).' },
+          { num: 171, critical: false, q: 'Câu 171. Thời gian lái xe liên tục của người lái xe ô tô kinh doanh vận tải được quy định như thế nào để bảo đảm an toàn giao thông?', options: ['1. Không quá 4 giờ.', '2. Không quá 6 giờ.', '3. Không quá 8 giờ.', '4. Liên tục tùy thuộc vào sức khỏe.'], correct: 0, explain: 'Đáp án đúng: Ý 1 (Không quá 4 giờ liên tục; không quá 10 giờ trong 1 ngày).' }
+        ]
+      },
+      {
+        id: 'ch2',
+        name: 'Chương II: Văn hóa GT, Đạo đức & PCCC, Cứu hộ',
+        shortName: '🟩 Chương II: Văn hóa & PCCC',
+        range: 'Câu 181 - 205',
+        color: 0x10b981,
+        vehicleType: 'firetruck_ambulance',
+        pos: { x: 0, y: 0, z: -32 },
+        desc: '25 câu (từ câu 181 đến 205): Văn hóa giao thông, đạo đức người lái xe, kỹ năng phòng cháy, chữa cháy và cứu hộ, cứu nạn.',
+        questions: [
+          { num: 181, critical: false, q: 'Câu 181. Người lái xe kinh doanh vận tải khi thực hiện tốt việc rèn luyện, nâng cao trách nhiệm, đạo đức nghề nghiệp sẽ thu được kết quả như thế nào dưới đây?', options: ['1. Được khách hàng, xã hội tôn trọng; được đồng nghiệp quý mến, giúp đỡ; được doanh nghiệp tin dùng và đóng góp nhiều cho xã hội; thu hút được khách hàng, góp phần quan trọng trong xây dựng thương hiệu, kinh doanh có hiệu quả cao.', '2. Được cộng điểm vào giấy phép lái xe.', '3. Cả hai ý trên.'], correct: 0, explain: 'Đáp án đúng: Ý 1.' },
+          { num: 186, critical: false, q: 'Câu 186. Trên làn đường dành cho ô tô có vũng nước lớn, người lái xe ô tô bắt buộc phải đi qua vũng nước, trên làn đường bên cạnh có nhiều người đang lái xe mô tô tham gia giao thông, người lái xe ô tô xử lý như thế nào khi lái xe qua vũng nước là có văn hóa giao thông?', options: ['1. Cho xe chạy thật nhanh qua vũng nước.', '2. Giảm tốc độ cho xe chạy chậm qua vũng nước.', '3. Giảm tốc độ cho xe chạy qua làn đường dành cho mô tô để tránh vũng nước.'], correct: 1, explain: 'Đáp án đúng: Ý 2 (Giảm tốc độ cho xe chạy chậm qua vũng nước).' },
+          { num: 188, critical: false, q: 'Câu 188. Khi sơ cứu người bị tai nạn giao thông đường bộ, có vết thương chảy máu ngoài, phun thành tia và phun mạnh khi mạch đập, bạn phải làm gì dưới đây?', options: ['1. Thực hiện cầm máu trực tiếp.', '2. Thực hiện cầm máu không trực tiếp (chặn động mạch).'], correct: 1, explain: 'Đáp án đúng: Ý 2 (Thực hiện cầm máu không trực tiếp - chặn động mạch).' },
+          { num: 196, critical: false, q: 'Câu 196. Khi sơ cứu ban đầu cho người bị tai nạn giao thông đường bộ không còn hô hấp, người lái xe và người có mặt tại hiện trường vụ tai nạn phải thực hiện các công việc gì dưới đây?', options: ['1. Đặt nạn nhân nằm ngửa, khai thông đường thở của nạn nhân; thực hiện các biện pháp hô hấp nhân tạo.', '2. Thực hiện các biện pháp hô hấp nhân tạo.'], correct: 0, explain: 'Đáp án đúng: Ý 1.' },
+          { num: 197, critical: true, q: 'Câu 197. Hành vi bỏ trốn sau khi gây tai nạn để trốn tránh trách nhiệm hoặc khi có điều kiện mà cố ý không cứu giúp người bị tai nạn giao thông có bị nghiêm cấm hay không?', options: ['1. Không bị nghiêm cấm.', '2. Nghiêm cấm tuỳ từng trường hợp cụ thể.', '3. Bị nghiêm cấm.'], correct: 2, explain: 'Đáp án đúng: Ý 3 (Bị nghiêm cấm).' },
+          { num: 204, critical: false, q: 'Câu 204. Khi phát hiện thấy có ngọn lửa, khói hoặc nhiệt độ cao bất thường từ phương tiện giao thông do mình điều khiển người lái xe phải làm gì trước tiên?', options: ['1. Bình tĩnh, đưa xe sát vào lề đường, tránh xa nơi có nhiều người, nhiều chất dễ cháy và tắt khóa điện, thực hiện các bước chữa cháy.', '2. Hô hoán để mọi người đến trợ giúp chữa cháy.', '3. Tiếp tục sử dụng nước dập lửa khi nhiên liệu trào ra ngoài.', '4. Cả ba ý trên.'], correct: 0, explain: 'Đáp án đúng: Ý 1.' }
+        ]
+      },
+      {
+        id: 'ch3',
+        name: 'Chương III: Kỹ thuật lái xe',
+        shortName: '🟪 Chương III: Kỹ thuật Lái',
+        range: 'Câu 206 - 263',
+        color: 0x8b5cf6,
+        vehicleType: 'suv_slope',
+        pos: { x: 34, y: 0, z: -22 },
+        desc: '58 câu (từ câu 206 đến 263): Kỹ thuật lên xuống dốc, vượt rãnh lớn, đèn báo bảng đồng hồ, xử lý sương mù, đèn pha ngược chiều và lái ô tô điện.',
+        questions: [
+          { num: 206, critical: true, q: 'Câu 206. Khi điều khiển xe mô tô tay ga xuống đường dốc dài, độ dốc cao, người lái xe cần thực hiện các thao tác nào dưới đây để bảo đảm an toàn?', options: ['1. Giữ tay ga ở mức độ phù hợp, sử dụng phanh trước và phanh sau để giảm tốc độ.', '2. Nhả hết tay ga, tắt động cơ, sử dụng phanh trước và phanh sau để giảm tốc độ.', '3. Sử dụng phanh trước để giảm tốc độ kết hợp với tắt chìa khóa điện của xe.'], correct: 0, explain: 'Đáp án đúng: Ý 1.' },
+          { num: 207, critical: false, q: 'Câu 207. Khi vào số để khởi hành xe ô tô có số tự động, người lái xe phải thực hiện các thao tác nào để bảo đảm an toàn?', options: ['1. Đạp bàn đạp phanh chân hết hành trình, vào số và nhả phanh đỗ, kiểm tra lại xem có bị nhầm số không rồi mới cho xe lăn bánh.', '2. Đạp bàn đạp để tăng ga với mức độ phù hợp, vào số và kiểm tra lại xem có bị nhầm số không rồi mới cho xe lăn bánh.'], correct: 0, explain: 'Đáp án đúng: Ý 1.' },
+          { num: 218, critical: false, q: 'Câu 218. Khi điều khiển xe sử dụng hộp số cơ khí vượt qua rãnh lớn cắt ngang mặt đường, người lái xe cần thực hiện các thao tác nào để đảm bảo an toàn?', options: ['1. Vào số một (1) và từ từ cho hai bánh xe trước xuống rãnh, tăng ga cho hai bánh xe trước vượt lên khỏi rãnh, tăng số, tăng tốc độ để bánh xe sau vượt qua rãnh.', '2. Tăng ga, tăng số để hai bánh xe trước và bánh xe sau vượt qua khỏi rãnh.', '3. Vào số một (1) và từ từ cho hai bánh xe trước xuống rãnh, tăng ga cho hai bánh xe trước vượt lên khỏi rãnh, tiếp tục để bánh xe sau từ từ xuống rãnh rồi tăng dần ga cho xe ô tô lên khỏi rãnh.'], correct: 2, explain: 'Đáp án đúng: Ý 3.' },
+          { num: 227, critical: false, q: 'Câu 227. Khi động cơ xe ô tô đã khởi động, bảng đồng hồ xuất hiện ký hiệu chữ BRAKE (!) như mô hình 3D đang hiển thị là báo hiệu tình trạng gì của xe ô tô?', options: ['1. Đang sử dụng phanh đỗ.', '2. Nhiệt độ nước làm mát quá mức cho phép.', '3. Cửa xe đang mở.'], correct: 0, explain: 'Đáp án đúng: Ý 1 (Đang sử dụng phanh đỗ).' },
+          { num: 228, critical: false, q: 'Câu 228. Khi động cơ xe ô tô đã khởi động, bảng đồng hồ xuất hiện ký hiệu bình dầu màu đỏ trên mô hình 3D là báo hiệu tình trạng gì của xe ô tô?', options: ['1. Đang sử dụng phanh đỗ.', '2. Thiếu dầu phanh.', '3. Nhiệt độ nước làm mát tăng quá mức cho phép.', '4. Áp suất dầu ở mức thấp.'], correct: 3, explain: 'Đáp án đúng: Ý 4 (Áp suất dầu ở mức thấp).' },
+          { num: 229, critical: false, q: 'Câu 229. Khi động cơ xe ô tô đã khởi động, bảng đồng hồ xuất hiện ký hiệu ô tô mở cánh cửa màu đỏ trên mô hình 3D là báo hiệu tình trạng gì của xe ô tô?', options: ['1. Cửa xe đóng chưa chặt hoặc có cửa xe chưa đóng.', '2. Bộ nạp ắc quy gặp sự cố kỹ thuật.', '3. Dầu bôi trơn bị thiếu.', '4. Ý 2 và ý 3.'], correct: 0, explain: 'Đáp án đúng: Ý 1 (Cửa xe đóng chưa chặt hoặc có cửa xe chưa đóng).' },
+          { num: 240, critical: true, q: 'Câu 240. Khi tầm nhìn bị hạn chế bởi sương mù hoặc mưa to, người lái xe phải thực hiện các thao tác nào để bảo đảm an toàn?', options: ['1. Tăng tốc độ, chạy gần xe trước, nhìn đèn hậu để định hướng.', '2. Giảm tốc độ, chạy cách xa xe trước với khoảng cách an toàn, bật đèn sương mù và đèn chiếu gần.', '3. Tăng tốc độ, bật đèn pha vượt qua xe chạy trước.'], correct: 1, explain: 'Đáp án đúng: Ý 2.' },
+          { num: 241, critical: true, q: 'Câu 241. Khi đèn pha của xe đi ngược chiều gây chói mắt, làm giảm khả năng quan sát trên đường, người lái xe xử lý như thế nào dưới đây để bảo đảm an toàn?', options: ['1. Giảm tốc độ, giữ vững tay lái, nhìn chếch sang lề đường bên phải.', '2. Bật đèn pha chiếu xa và giữ nguyên tốc độ.', '3. Tăng tốc độ, bật đèn pha đối diện xe phía trước.'], correct: 0, explain: 'Đáp án đúng: Ý 1.' },
+          { num: 263, critical: false, q: 'Câu 263. Khi lái xe ô tô điện qua khu vực ngập nước, người lái xe cần phải chú ý những vấn đề gì?', options: ['1. Người lái xe phải tìm hiểu khả năng chìm trong nước của xe để xác định cung đường di chuyển.', '2. Giữ vững tay lái, đi đều ga, tránh không để xe chết máy giữa dòng, không nên dừng xe trên đường ngập nước.', '3. Lái xe tốc độ chậm, không tạo sóng và giữ khoảng cách an toàn với các phương tiện xung quanh, nhất là người đi bộ.', '4. Cả ba ý trên.'], correct: 3, explain: 'Đáp án đúng: Ý 4 (Cả ba ý trên).' }
+        ]
+      },
+      {
+        id: 'ch4',
+        name: 'Chương IV: Cấu tạo và sửa chữa Ô tô',
+        shortName: '🔧 Chương IV: Cấu tạo & Sửa chữa',
+        range: 'Câu 264 - 300',
+        color: 0xec4899,
+        vehicleType: 'garage_lift',
+        pos: { x: -34, y: 0, z: 18 },
+        desc: '37 câu (từ câu 264 đến 300): Cấu tạo động cơ, truyền lực, hệ thống lái, phanh, niên hạn xe và mô hình 3D các thiết bị khẩn cấp trên ô tô.',
+        questions: [
+          { num: 264, critical: false, q: 'Câu 264. Phương pháp kiểm tra mức dầu bôi trơn động cơ nào dưới đây là đúng?', options: ['1. Kiểm tra que thăm dầu trên các-te ở mức tối đa.', '2. Rút que thăm dầu trên các-te ở mức tối thiểu.', '3. Rút que thăm dầu trên các-te, lau sạch que thăm sau đó cắm vào các-te và rút ra quan sát vệt dầu trên que thăm, mức dầu phải nằm trong khoảng vạch mức tối thiểu và tối đa được thể hiện trên que thăm.'], correct: 2, explain: 'Đáp án đúng: Ý 3.' },
+          { num: 277, critical: false, q: 'Câu 277. Niên hạn sử dụng của xe ô tô tải (tính bắt đầu từ năm sản xuất) không quá bao nhiêu năm?', options: ['1. 15 năm.', '2. 20 năm.', '3. 25 năm.'], correct: 2, explain: 'Đáp án đúng: Ý 3 (25 năm đối với ô tô tải; 20 năm đối với ô tô chở người trên 8 chỗ ở Câu 278).' },
+          { num: 286, critical: false, q: 'Câu 286. Khi động cơ ô tô đã khởi động, bảng đồng hồ 3D xuất hiện ký hiệu nhiệt kế màu đỏ trên sóng nước, báo hiệu tình trạng như thế nào của xe ô tô?', options: ['1. Nhiệt độ nước làm mát động cơ quá ngưỡng cho phép.', '2. Áp suất lốp không đủ.', '3. Đang hãm phanh tay.', '4. Cần kiểm tra động cơ.'], correct: 0, explain: 'Đáp án đúng: Ý 1.' },
+          { num: 288, critical: false, q: 'Câu 288. Khi động cơ ô tô đã khởi động, bảng đồng hồ 3D xuất hiện ký hiệu mặt cắt lốp xe có dấu chấm than (!), báo hiệu tình trạng như thế nào của xe ô tô?', options: ['1. Báo hiệu thiếu dầu phanh.', '2. Áp suất lốp không đủ.', '3. Đang hãm phanh tay.', '4. Sắp hết nhiên liệu.'], correct: 1, explain: 'Đáp án đúng: Ý 2 (Áp suất lốp không đủ).' },
+          { num: 289, critical: false, q: 'Câu 289. Khi động cơ ô tô đã khởi động, bảng đồng hồ 3D xuất hiện ký hiệu vòng tròn chữ ABS, báo hiệu tình trạng như thế nào của xe ô tô?', options: ['1. Báo hiệu hệ thống chống bó cứng phanh bị lỗi.', '2. Áp suất lốp không đủ.', '3. Đang hãm phanh tay.', '4. Sắp hết nhiên liệu.'], correct: 0, explain: 'Đáp án đúng: Ý 1.' },
+          { num: 295, critical: false, q: 'Câu 295. Khi động cơ ô tô đã khởi động, bảng đồng hồ 3D xuất hiện ký hiệu vô lăng kèm dấu chấm than đỏ (!), báo hiệu tình trạng như thế nào của xe ô tô?', options: ['1. Nhiệt độ nước làm mát động cơ quá ngưỡng cho phép.', '2. Áp suất lốp không đủ.', '3. Đang hãm phanh tay.', '4. Hệ thống lái gặp sự cố.'], correct: 3, explain: 'Đáp án đúng: Ý 4 (Hệ thống lái gặp sự cố).' },
+          { num: 297, critical: false, q: 'Câu 297. Trên xe ô tô có trang bị thiết bị như mô hình 3D đang hiển thị (búa đỏ hai đầu nhọn), dùng để làm gì?', options: ['1. Thay lốp xe.', '2. Chữa cháy.', '3. Phá cửa kính xe ô tô trong các trường hợp khẩn cấp.', '4. Vặn ốc để tháo lắp bánh xe.'], correct: 2, explain: 'Đáp án đúng: Ý 3.' },
+          { num: 298, critical: false, q: 'Câu 298. Trên xe ô tô có trang bị thiết bị như mô hình 3D đang hiển thị (bình chữa cháy màu đỏ), dùng để làm gì?', options: ['1. Thay lốp xe.', '2. Chữa cháy trong các trường hợp hỏa hoạn.', '3. Cầm máu cho người bị nạn.'], correct: 1, explain: 'Đáp án đúng: Ý 2.' },
+          { num: 299, critical: false, q: 'Câu 299. Nút bấm biểu tượng tam giác đỏ kép như mô hình 3D trên xe ô tô có ý nghĩa như thế nào?', options: ['1. Báo hiệu xin đường cho xe đi thẳng.', '2. Báo hiệu hệ thống phanh bị lỗi.', '3. Báo hiệu xe đang ở tình huống nguy hiểm.', '4. Báo hiệu đến thời gian cần bảo dưỡng.'], correct: 2, explain: 'Đáp án đúng: Ý 3.' },
+          { num: 300, critical: false, q: 'Câu 300. Khi động cơ đã hoạt động, bảng đồng hồ 3D xuất hiện biểu tượng chữ ECO màu xanh lá, báo hiệu tình trạng như thế nào của xe?', options: ['1. Báo hiệu hệ thống túi khí đã bật.', '2. Báo hiệu đèn chiếu sáng xa đã bật.', '3. Báo hiệu chế độ lái tiết kiệm nhiên liệu đã bật.', '4. Báo hiệu đèn cảnh báo khoảng cách đã bật.'], correct: 2, explain: 'Đáp án đúng: Ý 3.' }
+        ]
+      },
+      {
+        id: 'ch5',
+        name: 'Chương V: Báo hiệu đường bộ 3D',
+        shortName: '🟧 Chương V: Biển báo 3D',
+        range: 'Câu 301 - 485',
+        color: 0xf59e0b,
+        vehicleType: 'sign_gantry',
+        pos: { x: 34, y: 0, z: 18 },
+        desc: '185 câu (từ câu 301 đến 485): Toàn bộ câu hỏi biển báo và vạch kẻ đường được dựng thành Cột biển báo 3D và Mặt đường 3D trực quan.',
+        questions: [
+          { num: 301, critical: false, signLabels: ['Biển 1: Cấm cơ giới', 'Biển 2: Cấm tải & khách', 'Biển 3: Cấm kéo moóc'], signShapes: ['circle_red', 'circle_red', 'circle_red'], q: 'Câu 301. Biển nào cấm các loại xe cơ giới đi vào, trừ xe máy hai bánh, xe gắn máy và các loại xe ưu tiên theo quy định?', options: ['1. Biển 1.', '2. Biển 2.', '3. Biển 1 và biển 3.', '4. Cả ba biển.'], correct: 0, explain: 'Đáp án đúng: Ý 1 (Biển 1 - P.103a).' },
+          { num: 375, critical: false, signLabels: ['Biển 1: Giao đường sắt', 'Biển 2: Nhường đường', 'Biển 3: Tàu điện'], signShapes: ['tri_yellow', 'tri_yellow', 'tri_yellow'], q: 'Câu 375. Biển nào báo hiệu sắp đến chỗ giao nhau giữa đường bộ và đường sắt?', options: ['1. Biển 1.', '2. Biển 2.', '3. Biển 3.', '4. Biển 1 và biển 3.'], correct: 0, explain: 'Đáp án đúng: Ý 1 (Biển 1 có hình đầu tàu hỏa báo hiệu giao nhau với đường sắt không có rào chắn).' },
+          { num: 376, critical: false, signLabels: ['Biển 1: Cầu vồng', 'Biển 2: Cửa chui', 'Biển 3: Đường hầm'], signShapes: ['tri_yellow', 'tri_yellow', 'tri_yellow'], q: 'Câu 376. Biển nào báo hiệu "Cửa chui"?', options: ['1. Biển 1.', '2. Biển 2.', '3. Biển 3.'], correct: 1, explain: 'Đáp án đúng: Ý 2 (Biển 2 báo hiệu Cửa chui; Biển 3 báo hiệu Đường hầm).' },
+          { num: 377, critical: false, signLabels: ['Biển 1: Chữ X đơn', 'Biển 2: Chữ X kép'], signShapes: ['circle_red', 'circle_red'], q: 'Câu 377. Hai biển này có ý nghĩa như thế nào?', options: ['1. Để chỉ nơi đường sắt giao vuông góc với đường bộ không có rào chắn.', '2. Để báo trước sắp đến vị trí giao cắt đường bộ với đường sắt cùng mức, không vuông góc và không có người gác, không có rào chắn.', '3. Nơi đường sắt giao nhau với đường bộ.'], correct: 0, explain: 'Đáp án đúng: Ý 1 (Chỉ nơi đường sắt giao vuông góc với đường bộ không có rào chắn).' },
+          { num: 455, critical: false, signLabels: ['R.303: Vòng xuyến'], signShapes: ['circle_blue'], q: 'Câu 455. Gặp biển báo dưới đây, người lái xe có bắt buộc phải chạy vòng theo đảo an toàn theo hướng mũi tên khi muốn chuyển hướng hay không?', options: ['1. Bắt buộc.', '2. Không bắt buộc.'], correct: 0, explain: 'Đáp án đúng: Ý 1 (Bắt buộc).' },
+          { num: 456, critical: false, signLabels: ['Biển 1: Nam Định 30km', 'Biển 2: ĐỊA PHẬN HÀ NAM', 'Biển 3: VỊNH HẠ LONG'], signShapes: ['rect_blue', 'rect_blue', 'rect_blue'], q: 'Câu 456. Biển nào dưới đây chỉ dẫn địa giới hành chính giữa các thành phố, tỉnh, huyện?', options: ['1. Biển 1.', '2. Biển 2.', '3. Biển 3.'], correct: 1, explain: 'Đáp án đúng: Ý 2 (Biển 2 "ĐỊA PHẬN HÀ NAM").' },
+          { num: 457, critical: false, signLabels: ['Biển 1: QL1 Cầu vượt', 'Biển 2: Nút giao', 'Biển 3: QL1 Hòa Lạc'], signShapes: ['rect_blue', 'circle_blue', 'rect_blue'], q: 'Câu 457. Biển nào báo hiệu "Cầu vượt liên thông"?', options: ['1. Biển 2 và biển 3.', '2. Biển 1 và biển 2.', '3. Biển 1 và biển 3.', '4. Cả ba biển.'], correct: 2, explain: 'Đáp án đúng: Ý 3 (Biển 1 và biển 3 báo hiệu Cầu vượt liên thông).' },
+          { num: 461, critical: false, signLabels: ['Làn Khách', 'Làn Ô tô con', 'Làn Ô tô tải', 'Làn Mô tô'], signShapes: ['rect_blue', 'rect_blue', 'rect_blue', 'rect_blue'], q: 'Câu 461. Tại đoạn đường có biển "Làn đường dành riêng cho từng loại xe" dưới đây, các phương tiện có được phép chuyển sang làn khác để đi theo hành trình mong muốn khi đến gần nơi đường bộ giao nhau hay không?', options: ['1. Được phép chuyển sang làn khác.', '2. Không được phép chuyển sang làn khác, chỉ được đi trong làn quy định theo biển.'], correct: 0, explain: 'Đáp án đúng: Ý 1 (Được phép chuyển sang làn khác khi đến gần nơi đường bộ giao nhau).' },
+          { num: 462, critical: false, signLabels: ['Đường dành cho Ô tô'], signShapes: ['rect_blue'], q: 'Câu 462. Tại đoạn đường có cắm biển dưới đây (hình đầu xe ô tô), xe tải và xe khách có được phép đi vào không?', options: ['1. Có.', '2. Không.'], correct: 0, explain: 'Đáp án đúng: Ý 1 (Có, vì đây là biển đường dành cho các loại xe ô tô).' },
+          { num: 463, critical: false, signLabels: ['Chỉ dành cho Ô tô con'], signShapes: ['rect_blue'], q: 'Câu 463. Tại đoạn đường có cắm biển dưới đây (hình ngang xe ô tô con), xe tải và xe khách có được phép đi vào không?', options: ['1. Có.', '2. Không.'], correct: 1, explain: 'Đáp án đúng: Ý 2 (Không, vì biển này chỉ dành riêng cho xe ô tô con).' },
+          { num: 464, critical: false, signLabels: ['Biển 1: Hết ưu tiên', 'Biển 2: KẾT THÚC CAO TỐC', 'Biển 3: Hết đường ô tô'], signShapes: ['tri_yellow', 'rect_green', 'rect_blue'], q: 'Câu 464. Biển nào báo hiệu kết thúc đường cao tốc?', options: ['1. Biển 1.', '2. Biển 2.', '3. Biển 3.'], correct: 1, explain: 'Đáp án đúng: Ý 2 (Biển 2).' },
+          { num: 465, critical: false, signLabels: ['NHẬP LÀN 250 m'], signShapes: ['rect_green'], q: 'Câu 465. Biển này có ý nghĩa như thế nào?', options: ['1. Chỉ dẫn sắp đến vị trí nhập làn xe.', '2. Chỉ dẫn vị trí nhập làn xe cách 250 m.', '3. Chỉ dẫn vị trí nhập làn cách trạm thu phí 250 m.'], correct: 1, explain: 'Đáp án đúng: Ý 2 (Chỉ dẫn vị trí nhập làn xe cách 250 m).' },
+          { num: 470, critical: false, signLabels: ['Biển 1: Tránh Trái', 'Biển 2: Tránh 2 Bên', 'Biển 3: Tránh Phải'], signShapes: ['rect_striped', 'rect_striped', 'rect_striped'], q: 'Câu 470. Trên đường cao tốc, gặp biển nào thì người lái xe đi theo hướng bên trái để tránh chướng ngại vật?', options: ['1. Biển 1.', '2. Biển 2.', '3. Biển 3.'], correct: 0, explain: 'Đáp án đúng: Ý 1 (Biển 1 tránh sang trái; Biển 3 ở Câu 471 tránh sang phải; Biển 2 ở Câu 472 đi được cả 2 hướng).' },
+          { num: 473, critical: false, signLabels: ['Biển 1: Cong Phải', 'Biển 2: Chữ V', 'Biển 3: Cong Trái'], signShapes: ['rect_striped', 'rect_striped', 'rect_striped'], q: 'Câu 473. Trên đường cao tốc, gặp biển nào người lái xe phải chú ý đổi hướng đi khi sắp vào đường cong nguy hiểm?', options: ['1. Biển 1 và biển 2.', '2. Biển 1 và biển 3.', '3. Biển 2.', '4. Biển 3.'], correct: 1, explain: 'Đáp án đúng: Ý 2 (Biển 1 và biển 3).' },
+          { num: 476, critical: false, q: 'Câu 476. Vạch mũi tên chỉ hướng trên mặt đường nào dưới đây cho phép xe chỉ được đi thẳng và rẽ phải?', options: ['1. Vạch 1.', '2. Vạch 2 và vạch 3.', '3. Vạch 3.', '4. Vạch 1 và vạch 2.'], correct: 2, explain: 'Đáp án đúng: Ý 3 (Vạch 3).' },
+          { num: 477, critical: false, q: 'Câu 477. Vạch kẻ đường nào dưới đây là vạch phân chia các làn xe cùng chiều?', options: ['1. Vạch 1.', '2. Vạch 2.', '3. Vạch 3.', '4. Vạch 1 và vạch 2.'], correct: 3, explain: 'Đáp án đúng: Ý 4 (Vạch 1 nét đứt trắng và Vạch 2 nét liền trắng).' },
+          { num: 478, critical: false, q: 'Câu 478. Vạch kẻ đường nào dưới đây là vạch phân chia hai chiều xe chạy (vạch tim đường), xe không được lấn làn, không được đè lên vạch?', options: ['1. Vạch 1.', '2. Vạch 2.', '3. Vạch 3.', '4. Cả ba vạch.'], correct: 1, explain: 'Đáp án đúng: Ý 2 (Vạch 2 nét liền màu vàng).' }
+        ]
+      },
+      {
+        id: 'ch6',
+        name: 'Chương VI: Giải thế Sa hình & Tình huống 3D',
+        shortName: '🟨 Chương VI: Sa Hình Vuông 3D',
+        range: 'Câu 486 - 600',
+        color: 0xeab308,
+        vehicleType: 'intersection_3d',
+        pos: { x: 0, y: 0, z: 0 },
+        desc: '115 câu (từ câu 486 đến 600): Ngã tư Sa hình Hình Vuông 3D mô phỏng chính xác 100% vị trí xe, biển báo, đèn tín hiệu và thứ tự di chuyển của từng câu hỏi.',
+        questions: [
+          { num: 486, critical: false, q: 'Câu 486. Theo hướng mũi tên, xe nào chấp hành đúng quy tắc giao thông?', options: ['1. Xe khách, xe tải, xe mô tô.', '2. Xe tải, xe mô tô.', '3. Chỉ xe con.'], correct: 0, explain: 'Đáp án đúng: Ý 1 (Xe khách rẽ trái đèn xanh, xe tải rẽ phải đèn xanh, xe mô tô rẽ phải đèn xanh; còn xe con và xe tải đi thẳng vượt đèn đỏ là sai).' },
+          { num: 487, critical: false, q: 'Câu 487. Theo hướng mũi tên, thứ tự các xe đi như thế nào là đúng quy tắc giao thông?', options: ['1. Xe tải, xe khách, xe con, xe mô tô.', '2. Xe tải, xe mô tô, xe khách, xe con.', '3. Xe khách, xe tải, xe con, xe mô tô.', '4. Xe mô tô, xe khách, xe tải, xe con.'], correct: 1, explain: 'Đáp án đúng: Ý 2 (Xe tải đi thẳng trên đường ưu tiên -> Xe mô tô rẽ trái trên đường ưu tiên -> Xe khách đi thẳng -> Xe con rẽ trái).' },
+          { num: 488, critical: false, q: 'Câu 488. Theo hướng mũi tên, thứ tự các xe đi như thế nào là đúng quy tắc giao thông?', options: ['1. Xe công an đi làm nhiệm vụ khẩn cấp, xe con, xe tải, xe khách.', '2. Xe công an đi làm nhiệm vụ khẩn cấp, xe khách, xe con, xe tải.', '3. Xe công an đi làm nhiệm vụ khẩn cấp, xe tải, xe khách, xe con.', '4. Xe con, xe công an đi làm nhiệm vụ khẩn cấp, xe tải, xe khách.'], correct: 0, explain: 'Đáp án đúng: Ý 1 (Xe công an ưu tiên -> Xe con trên đường ưu tiên -> Xe tải đi thẳng -> Xe khách rẽ trái).' },
+          { num: 489, critical: false, q: 'Câu 489. Theo hướng mũi tên, thứ tự các xe đi như thế nào là đúng quy tắc giao thông?', options: ['1. Xe tải, xe công an đi làm nhiệm vụ khẩn cấp, xe khách, xe con.', '2. Xe công an đi làm nhiệm vụ khẩn cấp, xe khách, xe con, xe tải.', '3. Xe công an đi làm nhiệm vụ khẩn cấp, xe con, xe tải, xe khách.', '4. Xe công an đi làm nhiệm vụ khẩn cấp, xe tải, xe khách, xe con.'], correct: 3, explain: 'Đáp án đúng: Ý 4 (Xe công an đi làm nhiệm vụ khẩn cấp -> Xe tải trên đường ưu tiên -> Xe khách bên phải trống -> Xe con).' },
+          { num: 511, critical: false, q: 'Câu 511. Theo hướng mũi tên, hướng nào xe không được phép đi?', options: ['1. Hướng 2 và 5.', '2. Chỉ hướng 1.'], correct: 1, explain: 'Đáp án đúng: Ý 2 (Chỉ hướng 1 vì đầu nhánh 1 có biển cấm rẽ phải).' },
+          { num: 512, critical: false, q: 'Câu 512. Theo hướng mũi tên, những hướng nào xe ô tô không được phép đi?', options: ['1. Hướng 1 và 2.', '2. Hướng 3.', '3. Hướng 1 và 4.', '4. Hướng 2 và 3.'], correct: 1, explain: 'Đáp án đúng: Ý 2 (Hướng 3 vì có biển cấm rẽ trái; biển này không cấm quay đầu ở hướng 2).' },
+          { num: 513, critical: false, q: 'Câu 513. Xe nào vượt đúng quy tắc giao thông?', options: ['1. Cả hai xe đều đúng.', '2. Xe con.', '3. Xe khách.'], correct: 0, explain: 'Đáp án đúng: Ý 1 (Biển cấm ô tô tải vượt không cấm xe con và xe khách vượt, nên cả hai xe đều đúng).' },
+          { num: 514, critical: false, q: 'Câu 514. Theo hướng mũi tên, gặp biển hướng đi phải theo đặt trước ngã tư, những hướng nào xe được phép đi?', options: ['1. Hướng 2 và 3.', '2. Hướng 1, 2 và 3.', '3. Hướng 1 và 3.'], correct: 0, explain: 'Đáp án đúng: Ý 1 (Biển hiệu lệnh chỉ cho phép đi thẳng hướng 2 và rẽ trái hướng 3).' },
+          { num: 535, critical: false, q: 'Câu 535. Những hướng nào xe ô tô tải được phép đi?', options: ['1. Cả bốn hướng.', '2. Chỉ hướng 1 và 2.', '3. Trừ hướng 4.'], correct: 2, explain: 'Đáp án đúng: Ý 3 (Trừ hướng 4 vì có biển cấm đi ngược chiều).' },
+          { num: 536, critical: false, q: 'Câu 536. Theo hướng mũi tên, thứ tự các xe đi như thế nào là đúng?', options: ['1. Xe công an đi làm nhiệm vụ khẩn cấp, xe con, xe tải, xe khách.', '2. Xe con, xe khách và xe công an đi làm nhiệm vụ khẩn cấp, xe tải.', '3. Xe công an đi làm nhiệm vụ khẩn cấp, xe con, xe khách, xe tải.', '4. Xe con, xe tải, xe khách, xe công an.'], correct: 0, explain: 'Đáp án đúng: Ý 1 (Xe công an -> Xe con trên đường ưu tiên -> Xe tải đi thẳng -> Xe khách rẽ trái).' },
+          { num: 537, critical: false, q: 'Câu 537. Những hướng nào ô tô tải được phép đi?', options: ['1. Cả bốn hướng.', '2. Hướng 1, 2 và 3.', '3. Hướng 1 và 4.', '4. Hướng 1, 3 và 4.'], correct: 3, explain: 'Đáp án đúng: Ý 4 (Hướng 1, 3 và 4; vì biển cấm rẽ trái chỉ cấm hướng 2, còn biển ở hướng 4 là cấm máy kéo nên xe tải vẫn đi được).' },
+          { num: 571, critical: false, q: 'Câu 571. Xe của bạn được đi theo hướng nào trong trường hợp này?', options: ['1. Chuyển sang làn đường bên phải và rẽ phải.', '2. Dừng lại trước vạch dừng và rẽ phải khi đèn xanh.', '3. Dừng lại trước vạch dừng và đi thẳng hoặc rẽ trái khi đèn xanh.'], correct: 2, explain: 'Đáp án đúng: Ý 3 (Xe đang ở làn có mũi tên đi thẳng và rẽ trái, đèn đang đỏ nên phải dừng trước vạch và đi thẳng hoặc rẽ trái khi đèn xanh).' },
+          { num: 572, critical: true, q: 'Câu 572. Bạn xử lý như thế nào trong trường hợp này?', options: ['1. Tăng tốc độ, rẽ phải trước xe tải và xe đạp.', '2. Giảm tốc độ, rẽ phải sau xe tải và xe đạp.', '3. Tăng tốc độ, rẽ phải trước xe đạp.'], correct: 1, explain: 'Đáp án đúng: Ý 2 (Giảm tốc độ, rẽ phải sau xe tải đi thẳng và xe đạp trên làn ưu tiên).' },
+          { num: 573, critical: true, q: 'Câu 573. Bạn xử lý như thế nào trong trường hợp này?', options: ['1. Tăng tốc độ, rẽ phải trước xe con màu xanh phía trước và người đi bộ.', '2. Giảm tốc độ, để người đi bộ qua đường và rẽ phải trước xe con màu xanh.', '3. Giảm tốc độ, để người đi bộ qua đường và rẽ phải sau xe con màu xanh.'], correct: 2, explain: 'Đáp án đúng: Ý 3 (Giảm tốc độ, để người đi bộ qua đường và rẽ phải sau xe con màu xanh).' },
+          { num: 596, critical: true, q: 'Câu 596. Xe của bạn đang di chuyển gần đến khu vực giao cắt với đường sắt, khi rào chắn đang dịch chuyển, bạn điều khiển xe như thế nào là đúng quy tắc giao thông?', options: ['1. Quan sát nếu thấy không có tàu thì tăng tốc cho xe vượt qua đường sắt.', '2. Dừng lại trước rào chắn một khoảng cách an toàn.', '3. Ra tín hiệu, yêu cầu người gác chắn tàu kéo chậm barie để xe bạn qua.'], correct: 1, explain: 'Đáp án đúng: Ý 2 (Dừng lại trước rào chắn một khoảng cách an toàn).' },
+          { num: 597, critical: true, q: 'Câu 597. Trong tình huống dưới đây, xe con màu đỏ nhập làn đường cao tốc theo hướng mũi tên là đúng hay sai?', options: ['1. Đúng.', '2. Sai.'], correct: 1, explain: 'Đáp án đúng: Ý 2 (Sai, vì xe con màu đỏ không đi vào làn tăng tốc mà cắt ngang trực tiếp đầu xe đang chạy trên cao tốc).' },
+          { num: 598, critical: true, q: 'Câu 598. Trong tình huống dưới đây, xe con màu đỏ có được phép vượt khi xe con màu xanh đang vượt xe tải hay không?', options: ['1. Được vượt.', '2. Không được vượt.'], correct: 1, explain: 'Đáp án đúng: Ý 2 (Không được vượt khi xe phía trước đang vượt xe khác).' },
+          { num: 599, critical: false, q: 'Câu 599. Trong tình huống dưới đây, xe con màu vàng vượt xe con màu đỏ là đúng quy tắc giao thông hay không?', options: ['1. Đúng.', '2. Không đúng.'], correct: 0, explain: 'Đáp án đúng: Ý 1 (Đúng, vì phía làn của xe màu vàng là vạch nét đứt nên được phép đè vạch để vượt).' },
+          { num: 600, critical: true, q: 'Câu 600. Trong tình huống dưới đây, xe đầu kéo kéo rơ moóc (xe container) đang rẽ phải, xe con màu xanh và xe máy phía sau xe container đi như thế nào để bảo đảm an toàn?', options: ['1. Vượt về phía bên phải để đi tiếp.', '2. Giảm tốc độ chờ xe container rẽ xong rồi tiếp tục đi.', '3. Vượt về phía bên trái để đi tiếp.'], correct: 1, explain: 'Đáp án đúng: Ý 2 (Giảm tốc độ chờ xe container rẽ xong rồi tiếp tục đi).' }
+        ]
+      },
+      {
+        id: 'critical60',
+        name: 'Khu vực Cảnh báo Đỏ: 60 Câu Điểm Liệt',
+        shortName: '🚨 60 Câu Điểm Liệt',
+        range: 'Nhóm câu mất ATGT nghiêm trọng',
+        color: 0xef4444,
+        vehicleType: 'railway_police',
+        pos: { x: -18, y: 0, z: 32 },
+        desc: '60 câu hỏi về các tình huống mất an toàn giao thông nghiêm trọng. Trả lời sai bất kỳ câu nào trong nhóm này sẽ bị đánh giá là KHÔNG ĐẠT.',
+        questions: [
+          { num: 242, critical: true, q: 'Câu 242. Để đạt được hiệu quả phanh cao nhất, người lái xe mô tô phải sử dụng các kỹ năng như thế nào dưới đây?', options: ['1. Sử dụng phanh trước.', '2. Sử dụng phanh sau.', '3. Giảm hết ga, sử dụng đồng thời cả phanh sau và phanh trước.'], correct: 2, explain: 'Đáp án đúng: Ý 3 (Giảm hết ga, sử dụng đồng thời cả phanh sau và phanh trước).' },
+          { num: 572, critical: true, q: 'Câu 572. Bạn xử lý như thế nào trong trường hợp này?', options: ['1. Tăng tốc độ, rẽ phải trước xe tải và xe đạp.', '2. Giảm tốc độ, rẽ phải sau xe tải và xe đạp.', '3. Tăng tốc độ, rẽ phải trước xe đạp.'], correct: 1, explain: 'Đáp án đúng: Ý 2.' },
+          { num: 573, critical: true, q: 'Câu 573. Bạn xử lý như thế nào trong trường hợp này?', options: ['1. Tăng tốc độ, rẽ phải trước xe con màu xanh phía trước và người đi bộ.', '2. Giảm tốc độ, để người đi bộ qua đường và rẽ phải trước xe con màu xanh.', '3. Giảm tốc độ, để người đi bộ qua đường và rẽ phải sau xe con màu xanh.'], correct: 2, explain: 'Đáp án đúng: Ý 3.' },
+          { num: 581, critical: true, q: 'Câu 581. Xe tải phía trước có tín hiệu xin chuyển làn đường, bạn xử lý như thế nào trong trường hợp này?', options: ['1. Bật tín hiệu xin chuyển làn đường sang trái để vượt xe tải.', '2. Phanh xe giảm tốc độ chờ xe tải phía trước chuyển làn đường.', '3. Bấm còi báo hiệu và vượt qua xe tải trên làn đường của mình.'], correct: 1, explain: 'Đáp án đúng: Ý 2.' },
+          { num: 595, critical: true, q: 'Câu 595. Khi gặp xe ngược chiều bật đèn pha trong tình huống dưới đây, bạn xử lý như thế nào?', options: ['1. Bật đèn chiếu xa, tăng tốc độ vượt xe cùng chiều.', '2. Giữ nguyên đèn chiếu gần, giảm tốc độ, đi sau xe phía trước.', '3. Giữ nguyên đèn chiếu gần, tăng tốc độ vượt xe cùng chiều.'], correct: 1, explain: 'Đáp án đúng: Ý 2.' },
+          { num: 596, critical: true, q: 'Câu 596. Xe của bạn đang di chuyển gần đến khu vực giao cắt với đường sắt, khi rào chắn đang dịch chuyển, bạn điều khiển xe như thế nào là đúng quy tắc giao thông?', options: ['1. Quan sát nếu thấy không có tàu thì tăng tốc cho xe vượt qua đường sắt.', '2. Dừng lại trước rào chắn một khoảng cách an toàn.', '3. Ra tín hiệu, yêu cầu người gác chắn tàu kéo chậm barie để xe bạn qua.'], correct: 1, explain: 'Đáp án đúng: Ý 2.' },
+          { num: 597, critical: true, q: 'Câu 597. Trong tình huống dưới đây, xe con màu đỏ nhập làn đường cao tốc theo hướng mũi tên là đúng hay sai?', options: ['1. Đúng.', '2. Sai.'], correct: 1, explain: 'Đáp án đúng: Ý 2 (Sai).' },
+          { num: 598, critical: true, q: 'Câu 598. Trong tình huống dưới đây, xe con màu đỏ có được phép vượt khi xe con màu xanh đang vượt xe tải hay không?', options: ['1. Được vượt.', '2. Không được vượt.'], correct: 1, explain: 'Đáp án đúng: Ý 2 (Không được vượt).' },
+          { num: 600, critical: true, q: 'Câu 600. Trong tình huống dưới đây, xe đầu kéo kéo rơ moóc (xe container) đang rẽ phải, xe con màu xanh và xe máy phía sau xe container đi như thế nào để bảo đảm an toàn?', options: ['1. Vượt về phía bên phải để đi tiếp.', '2. Giảm tốc độ chờ xe container rẽ xong rồi tiếp tục đi.', '3. Vượt về phía bên trái để đi tiếp.'], correct: 1, explain: 'Đáp án đúng: Ý 2.' }
+        ]
+      },
+      {
+        id: 'exam_zone',
+        name: '🏆 Trung Tâm Sát Hạch - Khu Thi Thử (20 Phút)',
+        shortName: '🏆 KHU THI THỬ SÁT HẠCH',
+        range: 'Đề tổng hợp 6 Chương + Điểm liệt',
+        color: 0xf43f5e,
+        vehicleType: 'exam_center',
+        pos: { x: 18, y: 0, z: 32 },
+        desc: 'Khu vực Thi Thử Sát Hạch Lái Xe: Tự động rút đề tổng hợp từ 6 Chương + Câu điểm liệt, bấm giờ 20 phút và chấm điểm tự động.',
+        questions: [] // Được tạo tự động mỗi khi vào Khu Thi Thử
+      }
+    ];
+
+    // =========================================================================
+    // 2. KHỞI TẠO KHÔNG GIAN 3D VỚI NGÃ TƯ HÌNH VUÔNG & PHÂN KHU HÌNH VUÔNG
+    // =========================================================================
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x060913);
+    scene.fog = new THREE.FogExp2(0x060913, 0.0055);
+
+    const camera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 0.3, 350);
+    camera.position.set(-16, 22, 26);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.maxPolarAngle = Math.PI / 2 - 0.03;
+    controls.minDistance = 4;
+    controls.maxDistance = 140;
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.78));
+    const dirLight = new THREE.DirectionalLight(0xfffbeb, 0.95);
+    dirLight.position.set(35, 65, 35);
+    dirLight.castShadow = true;
+    scene.add(dirLight);
+
+    // Mặt nền tổng thể
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(190, 190),
+      new THREE.MeshStandardMaterial({ color: 0x090f1d, roughness: 0.95 })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    const gridHelper = new THREE.GridHelper(180, 60, 0x1e293b, 0x162032);
+    gridHelper.position.y = 0.01;
+    scene.add(gridHelper);
+
+    // Dựng NGÃ TƯ SA HÌNH HÌNH VUÔNG (Thay thế hoàn toàn hình tròn)
+    function createSquareIntersection3D() {
+      const group = new THREE.Group();
+
+      // 1. Nền khu vực Ngã tư Hình Vuông (30m x 30m)
+      const squareBase = new THREE.Mesh(
+        new THREE.BoxGeometry(30, 0.16, 30),
+        new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.75 })
+      );
+      squareBase.position.set(0, 0.08, 0);
+      squareBase.receiveShadow = true;
+      group.add(squareBase);
+
+      // Viền khung Hình Vuông màu vàng nổi bật quanh Ngã tư
+      const borderEdges = new THREE.EdgesGeometry(new THREE.BoxGeometry(30.2, 0.25, 30.2));
+      const borderLine = new THREE.LineSegments(borderEdges, new THREE.LineBasicMaterial({ color: 0xeab308 }));
+      borderLine.position.set(0, 0.14, 0);
+      group.add(borderLine);
+
+      // 2. Bốn góc vỉa hè & thảm cỏ Hình Vuông tạo thành ngã tư vuông vức giống hệt hình trong sách CSGT
+      const cornerPositions = [
+        { x: -10.5, z: -10.5 },
+        { x: 10.5, z: -10.5 },
+        { x: -10.5, z: 10.5 },
+        { x: 10.5, z: 10.5 }
+      ];
+      cornerPositions.forEach(cp => {
+        const sidewalk = new THREE.Mesh(
+          new THREE.BoxGeometry(9, 0.35, 9),
+          new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.8 })
+        );
+        sidewalk.position.set(cp.x, 0.18, cp.z);
+        group.add(sidewalk);
+
+        const grass = new THREE.Mesh(
+          new THREE.BoxGeometry(7.2, 0.42, 7.2),
+          new THREE.MeshStandardMaterial({ color: 0x4d7c0f, roughness: 0.9 })
+        );
+        grass.position.set(cp.x, 0.22, cp.z);
+        group.add(grass);
+      });
+
+      // 3. Đường dẫn kéo dài ra 4 phía Đông - Tây - Nam - Bắc
+      const roadMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8 });
+      const extRoadH = new THREE.Mesh(new THREE.PlaneGeometry(140, 12), roadMat);
+      extRoadH.rotation.x = -Math.PI / 2;
+      extRoadH.position.set(0, 0.04, 0);
+      group.add(extRoadH);
+
+      const extRoadV = new THREE.Mesh(new THREE.PlaneGeometry(12, 140), roadMat);
+      extRoadV.rotation.x = -Math.PI / 2;
+      extRoadV.position.set(0, 0.04, 0);
+      group.add(extRoadV);
+
+      // 4. Vạch kẻ tim đường & Vạch người đi bộ vuông góc ở 4 hướng ngã tư
+      const whiteMat = new THREE.MeshBasicMaterial({ color: 0xf8fafc });
+      const yellowMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
+
+      for (let i = -4.8; i <= 4.8; i += 1.2) {
+        // Bắc & Nam
+        const zN = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.04, 2.0), whiteMat);
+        zN.position.set(i, 0.17, -7.2);
+        group.add(zN);
+
+        const zS = zN.clone();
+        zS.position.set(i, 0.17, 7.2);
+        group.add(zS);
+
+        // Tây & Đông
+        const zW = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.04, 0.55), whiteMat);
+        zW.position.set(-7.2, 0.17, i);
+        group.add(zW);
+
+        const zE = zW.clone();
+        zE.position.set(7.2, 0.17, i);
+        group.add(zE);
+      }
+
+      // Vạch dừng màu vàng ở 4 hướng như hình minh họa Chương VI
+      const stopS = new THREE.Mesh(new THREE.BoxGeometry(5.5, 0.05, 0.25), yellowMat);
+      stopS.position.set(2.8, 0.17, 8.6);
+      group.add(stopS);
+
+      const stopN = new THREE.Mesh(new THREE.BoxGeometry(5.5, 0.05, 0.25), yellowMat);
+      stopN.position.set(-2.8, 0.17, -8.6);
+      group.add(stopN);
+
+      const stopW = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.05, 5.5), yellowMat);
+      stopW.position.set(-8.6, 0.17, 2.8);
+      group.add(stopW);
+
+      const stopE = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.05, 5.5), yellowMat);
+      stopE.position.set(8.6, 0.17, -2.8);
+      group.add(stopE);
+
+      scene.add(group);
+    }
+    createSquareIntersection3D();
+
+    // =========================================================================
+    // 3. HÀM DỰNG MÔ HÌNH Ô TÔ 3D CHI TIẾT
+    // =========================================================================
+    function createDetailedVehicle3D(type = 'sedan', customColor = null) {
+      const group = new THREE.Group();
+      const wheelGeo = new THREE.CylinderGeometry(0.45, 0.45, 0.34, 18);
+      wheelGeo.rotateZ(Math.PI / 2);
+      const wheelMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.8 });
+      const rimGeo = new THREE.CylinderGeometry(0.24, 0.24, 0.36, 12);
+      rimGeo.rotateZ(Math.PI / 2);
+      const rimMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.8 });
+
+      function addWheel(x, y, z) {
+        const w = new THREE.Group();
+        w.add(new THREE.Mesh(wheelGeo, wheelMat));
+        w.add(new THREE.Mesh(rimGeo, rimMat));
+        w.position.set(x, y, z);
+        group.add(w);
+      }
+
+      const glassMat = new THREE.MeshStandardMaterial({ color: 0xbae6fd, metalness: 0.85, roughness: 0.15 });
+      const headMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
+      const tailMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+
+      if (type === 'sedan' || type === 'police' || type === 'suv' || type === 'military') {
+        const mainColor = customColor || (type === 'police' ? 0x1e3a8a : (type === 'military' ? 0x15803d : (type === 'suv' ? 0x8b5cf6 : 0x2563eb)));
+        const bodyMat = new THREE.MeshStandardMaterial({ color: mainColor, metalness: 0.5, roughness: 0.28 });
+
+        const chassis = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.8, 4.4), bodyMat);
+        chassis.position.y = 0.75;
+        chassis.castShadow = true;
+        group.add(chassis);
+
+        const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.82, 0.68, 2.2), bodyMat);
+        cabin.position.set(0, 1.42, -0.15);
+        group.add(cabin);
+
+        const glass = new THREE.Mesh(new THREE.BoxGeometry(1.72, 0.58, 2.3), glassMat);
+        glass.position.copy(cabin.position);
+        group.add(glass);
+
+        [-0.7, 0.7].forEach(lx => {
+          const hl = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.2, 0.1), headMat);
+          hl.position.set(lx, 0.82, 2.21);
+          group.add(hl);
+          const tl = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.2, 0.1), tailMat);
+          tl.position.set(lx, 0.82, -2.21);
+          group.add(tl);
+        });
+
+        if (type === 'police' || type === 'military') {
+          const siren = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.18, 0.32), new THREE.MeshBasicMaterial({ color: 0xef4444 }));
+          siren.position.set(0, 1.85, -0.1);
+          group.add(siren);
+        }
+
+        addWheel(-1.08, 0.45, 1.35);
+        addWheel(1.08, 0.45, 1.35);
+        addWheel(-1.08, 0.45, -1.35);
+        addWheel(1.08, 0.45, -1.35);
+
+      } else if (type === 'truck' || type === 'firetruck' || type === 'container' || type === 'tractor') {
+        const isFire = type === 'firetruck';
+        const isCont = type === 'container';
+        const cabColor = customColor || (isFire ? 0xdc2626 : (isCont ? 0xd97706 : 0x0284c7));
+        const cabMat = new THREE.MeshStandardMaterial({ color: cabColor, roughness: 0.3 });
+        const boxColor = isFire ? 0xb91c1c : 0xf1f5f9;
+        const boxMat = new THREE.MeshStandardMaterial({ color: boxColor, roughness: 0.4 });
+
+        const cab = new THREE.Mesh(new THREE.BoxGeometry(2.3, 2.0, 2.0), cabMat);
+        cab.position.set(0, 1.4, 2.0);
+        cab.castShadow = true;
+        group.add(cab);
+
+        const fGlass = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.8, 0.12), glassMat);
+        fGlass.position.set(0, 1.75, 3.01);
+        group.add(fGlass);
+
+        const cargoLen = isCont ? 6.2 : 4.2;
+        const cargo = new THREE.Mesh(new THREE.BoxGeometry(2.38, 2.4, cargoLen), boxMat);
+        cargo.position.set(0, 1.65, isCont ? -2.2 : -1.1);
+        cargo.castShadow = true;
+        group.add(cargo);
+
+        if (isFire) {
+          const siren = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.22, 0.35), new THREE.MeshBasicMaterial({ color: 0xef4444 }));
+          siren.position.set(0, 2.52, 2.2);
+          group.add(siren);
+        }
+
+        addWheel(-1.18, 0.45, 2.0);
+        addWheel(1.18, 0.45, 2.0);
+        addWheel(-1.18, 0.45, -0.6);
+        addWheel(1.18, 0.45, -0.6);
+        addWheel(-1.18, 0.45, isCont ? -4.2 : -2.4);
+        addWheel(1.18, 0.45, isCont ? -4.2 : -2.4);
+
+      } else if (type === 'bus' || type === 'ambulance') {
+        const isAmb = type === 'ambulance';
+        const busColor = customColor || (isAmb ? 0xffffff : 0xca8a04);
+        const bodyMat = new THREE.MeshStandardMaterial({ color: busColor, roughness: 0.3 });
+        const len = isAmb ? 4.8 : 6.8;
+
+        const body = new THREE.Mesh(new THREE.BoxGeometry(2.35, 2.25, len), bodyMat);
+        body.position.y = 1.55;
+        body.castShadow = true;
+        group.add(body);
+
+        const winBand = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.8, len - 0.5), glassMat);
+        winBand.position.set(0, 1.88, 0.1);
+        group.add(winBand);
+
+        if (isAmb) {
+          const siren = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.22, 0.35), tailMat);
+          siren.position.set(0, 2.78, 1.3);
+          group.add(siren);
+        }
+
+        addWheel(-1.18, 0.45, len * 0.32);
+        addWheel(1.18, 0.45, len * 0.32);
+        addWheel(-1.18, 0.45, -len * 0.32);
+        addWheel(1.18, 0.45, -len * 0.32);
+
+      } else if (type === 'moto' || type === 'bike') {
+        const mColor = customColor || (type === 'moto' ? 0xef4444 : 0x38bdf8);
+        const frame = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.72, 1.75), new THREE.MeshStandardMaterial({ color: mColor }));
+        frame.position.y = 0.72;
+        group.add(frame);
+
+        const rider = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.2, 0.82, 12), new THREE.MeshStandardMaterial({ color: 0xf8fafc }));
+        rider.position.set(0, 1.4, -0.08);
+        group.add(rider);
+        const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.22, 14, 14), new THREE.MeshStandardMaterial({ color: mColor }));
+        helmet.position.set(0, 1.98, -0.05);
+        group.add(helmet);
+
+        addWheel(0, 0.4, 0.62);
+        addWheel(0, 0.4, -0.62);
+      }
+
+      return group;
+    }
+
+    // =========================================================================
+    // 4. DỰNG 8 KHU VỰC HÌNH VUÔNG TRÊN BẢN ĐỒ 3D (BAO GỒM KHU THI THỬ)
+    // =========================================================================
+    const zoneHitMeshes = [];
+    const labelsLayer = document.getElementById('labels-layer');
+    const stageTagsLayer = document.getElementById('stage-tags-layer');
+
+    ZONES_DATA.forEach((zone) => {
+      const group = new THREE.Group();
+      group.position.set(zone.pos.x, 0, zone.pos.z);
+
+      // Mọi khu vực đều dùng ĐẾ HÌNH VUÔNG (BoxGeometry) thay vì hình tròn
+      const isCenter = zone.id === 'ch6';
+      const size = isCenter ? 30 : 14;
+      const squarePadGeo = new THREE.BoxGeometry(size, 0.38, size);
+      const squarePadMat = new THREE.MeshStandardMaterial({
+        color: 0x1e293b,
+        roughness: 0.45,
+        transparent: true,
+        opacity: isCenter ? 0.05 : 0.92
+      });
+      const pad = new THREE.Mesh(squarePadGeo, squarePadMat);
+      pad.position.y = 0.19;
+      pad.userData = { zoneId: zone.id };
+      group.add(pad);
+      zoneHitMeshes.push(pad);
+
+      // Viền khung Hình Vuông phát sáng theo màu của từng khu vực
+      if (!isCenter) {
+        const edgeGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(size + 0.2, 0.45, size + 0.2));
+        const edgeLine = new THREE.LineSegments(edgeGeo, new THREE.LineBasicMaterial({ color: zone.color }));
+        edgeLine.position.y = 0.24;
+        group.add(edgeLine);
+      }
+
+      const showcase = new THREE.Group();
+      showcase.position.y = 0.38;
+
+      if (zone.vehicleType === 'police_podium') {
+        const c1 = createDetailedVehicle3D('police');
+        c1.position.set(-2.5, 0, 0);
+        showcase.add(c1);
+        const c2 = createDetailedVehicle3D('sedan', 0x38bdf8);
+        c2.position.set(2.5, 0, 0);
+        showcase.add(c2);
+      } else if (zone.vehicleType === 'firetruck_ambulance') {
+        const f = createDetailedVehicle3D('firetruck');
+        f.position.set(-2.6, 0, 0);
+        showcase.add(f);
+        const a = createDetailedVehicle3D('ambulance');
+        a.position.set(2.6, 0, 0);
+        showcase.add(a);
+      } else if (zone.vehicleType === 'suv_slope') {
+        const ramp = new THREE.Mesh(new THREE.BoxGeometry(5, 1.6, 9), new THREE.MeshStandardMaterial({ color: 0x334155 }));
+        ramp.position.set(0, 0.6, 0);
+        ramp.rotation.x = -0.2;
+        showcase.add(ramp);
+        const suv = createDetailedVehicle3D('suv', 0x8b5cf6);
+        suv.position.set(0, 1.55, 0.3);
+        suv.rotation.x = -0.2;
+        showcase.add(suv);
+      } else if (zone.vehicleType === 'garage_lift') {
+        [-2.2, 2.2].forEach(px => {
+          const post = new THREE.Mesh(new THREE.BoxGeometry(0.45, 4.0, 0.45), new THREE.MeshStandardMaterial({ color: 0xec4899 }));
+          post.position.set(px, 2.0, 0);
+          showcase.add(post);
+        });
+        const car = createDetailedVehicle3D('sedan', 0xf43f5e);
+        car.position.set(0, 1.7, 0);
+        showcase.add(car);
+      } else if (zone.vehicleType === 'sign_gantry') {
+        [-4.2, 4.2].forEach(px => {
+          const pole = new THREE.Mesh(new THREE.BoxGeometry(0.35, 5.2, 0.35), new THREE.MeshStandardMaterial({ color: 0xcbd5e1 }));
+          pole.position.set(px, 2.6, -1.5);
+          showcase.add(pole);
+        });
+        const board = new THREE.Mesh(new THREE.BoxGeometry(9.0, 2.0, 0.25), new THREE.MeshStandardMaterial({ color: 0x16a34a }));
+        board.position.set(0, 4.4, -1.5);
+        showcase.add(board);
+        const t = createDetailedVehicle3D('truck', 0xf59e0b);
+        t.position.set(0, 0, 1.2);
+        showcase.add(t);
+      } else if (zone.vehicleType === 'railway_police') {
+        const pCar = createDetailedVehicle3D('police', 0xef4444);
+        pCar.position.set(-2.0, 0, 0.5);
+        showcase.add(pCar);
+        const arm = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.24, 0.24), new THREE.MeshStandardMaterial({ color: 0xef4444 }));
+        arm.position.set(2.0, 1.6, -1.5);
+        showcase.add(arm);
+      } else if (zone.vehicleType === 'exam_center') {
+        // Mô hình Khu Thi Thử Sát Hạch: Cổng Xuất Phát Sát Hạch + 2 Xe Sát Hạch Vàng
+        [-4.5, 4.5].forEach(px => {
+          const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.6, 5.5, 0.6), new THREE.MeshStandardMaterial({ color: 0xf43f5e }));
+          pillar.position.set(px, 2.75, -2.0);
+          showcase.add(pillar);
+        });
+        const bannerArch = new THREE.Mesh(new THREE.BoxGeometry(9.8, 1.6, 0.5), new THREE.MeshStandardMaterial({ color: 0xf59e0b }));
+        bannerArch.position.set(0, 5.0, -2.0);
+        showcase.add(bannerArch);
+
+        const examCar1 = createDetailedVehicle3D('sedan', 0xfacc15);
+        examCar1.position.set(-2.2, 0, 1.2);
+        showcase.add(examCar1);
+
+        const examCar2 = createDetailedVehicle3D('truck', 0xf43f5e);
+        examCar2.position.set(2.2, 0, 1.0);
+        showcase.add(examCar2);
+      }
+
+      showcase.traverse(child => {
+        if (child.isMesh) {
+          child.userData = { zoneId: zone.id };
+          zoneHitMeshes.push(child);
+        }
+      });
+
+      group.add(showcase);
+      scene.add(group);
+
+      const label = document.createElement('div');
+      label.className = 'zone-label';
+      label.id = `zlabel-${zone.id}`;
+      label.innerHTML = `${zone.shortName}<span>${zone.id === 'exam_zone' ? 'Bấm để Thi Thử 20 phút' : zone.questions.length + ' câu · Bấm để làm bài ngay'}</span>`;
+      label.onclick = () => selectZone(zone.id);
+      labelsLayer.appendChild(label);
+      zone.labelEl = label;
+      zone.showcase = showcase;
+    });
+
+    // Nội thất Buồng lái 3D cho các câu hỏi góc nhìn người lái (Câu 571-600)
+    const cockpitGroup = new THREE.Group();
+    cockpitGroup.position.set(2.8, 1.55, 14.5);
+    const dashMesh = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.45, 0.6), new THREE.MeshStandardMaterial({ color: 0x0f172a }));
+    dashMesh.position.set(0, -0.25, -0.75);
+    cockpitGroup.add(dashMesh);
+    const steeringWheel = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.035, 12, 24), new THREE.MeshStandardMaterial({ color: 0x1e293b }));
+    steeringWheel.position.set(-0.42, -0.05, -0.52);
+    cockpitGroup.add(steeringWheel);
+    scene.add(cockpitGroup);
+
+    // =========================================================================
+    // 5. BỘ DỰNG CẢNH 3D CHÍNH XÁC CHO TỪNG CÂU HỎI (1 -> 600, KHÔNG CHẠY NGẪU NHIÊN)
+    // =========================================================================
+    const live3DStage = new THREE.Group();
+    live3DStage.position.set(0, 0, 0);
+    scene.add(live3DStage);
+
+    let animatedStageVehicles = [];
+    let isRunning3DTraffic = false;
+    let trafficTick = 0;
+    let stageFloatingTags = [];
+
+    function clearLive3DStage() {
+      while (live3DStage.children.length > 0) {
+        live3DStage.remove(live3DStage.children[0]);
+      }
+      animatedStageVehicles = [];
+      isRunning3DTraffic = false;
+      trafficTick = 0;
+      stageTagsLayer.innerHTML = '';
+      stageFloatingTags = [];
+    }
+
+    function add3DFloatingTag(text, worldPos, borderColor = '#fbbf24') {
+      const el = document.createElement('div');
+      el.className = 'stage-3d-tag';
+      el.style.borderColor = borderColor;
+      el.textContent = text;
+      stageTagsLayer.appendChild(el);
+      stageFloatingTags.push({ el, pos: worldPos.clone() });
+    }
+
+    function createCanvasTexture3D(title, subTitle, shapeType = 'circle_red') {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 256;
+      const ctx = canvas.getContext('2d');
+
+      if (shapeType === 'circle_red') {
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.arc(128, 128, 112, 0, Math.PI * 2); ctx.fill();
+        ctx.lineWidth = 24; ctx.strokeStyle = '#ef4444'; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(52, 52); ctx.lineTo(204, 204); ctx.stroke();
+        ctx.fillStyle = '#0f172a';
+      } else if (shapeType === 'tri_yellow') {
+        ctx.fillStyle = '#fde047';
+        ctx.beginPath(); ctx.moveTo(128, 20); ctx.lineTo(236, 224); ctx.lineTo(20, 224); ctx.closePath(); ctx.fill();
+        ctx.lineWidth = 18; ctx.strokeStyle = '#ef4444'; ctx.stroke();
+        ctx.fillStyle = '#0f172a';
+      } else if (shapeType === 'rect_green' || shapeType === 'rect_blue' || shapeType === 'rect_dark') {
+        ctx.fillStyle = shapeType === 'rect_green' ? '#16a34a' : (shapeType === 'rect_blue' ? '#0284c7' : '#0f172a');
+        ctx.fillRect(14, 22, 228, 212);
+        ctx.lineWidth = 8; ctx.strokeStyle = '#ffffff'; ctx.strokeRect(14, 22, 228, 212);
+        ctx.fillStyle = '#ffffff';
+      } else if (shapeType === 'rect_striped') {
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(48, 12, 160, 232);
+        ctx.fillStyle = '#0f172a';
+        for (let y = 20; y < 220; y += 45) ctx.fillRect(48, y, 160, 22);
+        ctx.fillStyle = '#ffffff';
+      } else {
+        ctx.fillStyle = '#0284c7';
+        ctx.beginPath(); ctx.arc(128, 128, 112, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ffffff';
+      }
+
+      ctx.font = 'bold 25px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(title.slice(0, 17), 128, 130);
+      if (subTitle) {
+        ctx.font = 'bold 19px sans-serif';
+        ctx.fillText(subTitle.slice(0, 20), 128, 166);
+      }
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    function create3DTrafficSignPole(x, z, labelText, shapeType = 'circle_red') {
+      const signGroup = new THREE.Group();
+      signGroup.position.set(x, 0, z);
+      const pole = new THREE.Mesh(
+        new THREE.BoxGeometry(0.2, 4.2, 0.2),
+        new THREE.MeshStandardMaterial({ color: 0xe2e8f0 })
+      );
+      pole.position.y = 2.1;
+      signGroup.add(pole);
+
+      const parts = labelText.split(':');
+      const tex = createCanvasTexture3D(parts[1] ? parts[1].trim() : labelText, parts[0] || '', shapeType);
+      const board = new THREE.Mesh(
+        new THREE.BoxGeometry(2.4, 2.4, 0.16),
+        new THREE.MeshBasicMaterial({ map: tex })
+      );
+      board.position.y = 4.2;
+      signGroup.add(board);
+
+      live3DStage.add(signGroup);
+      add3DFloatingTag(labelText, new THREE.Vector3(x, 5.8, z), '#fbbf24');
+    }
+
+    function create3DRoadArrow(startVec, endVec, color = 0xef4444) {
+      const midVec = new THREE.Vector3((startVec.x + endVec.x) * 0.32, 0.2, (startVec.z + endVec.z) * 0.32);
+      const curve = new THREE.QuadraticBezierCurve3(startVec, midVec, endVec);
+      const tubeGeo = new THREE.TubeGeometry(curve, 24, 0.16, 8, false);
+      const tubeMat = new THREE.MeshBasicMaterial({ color });
+      live3DStage.add(new THREE.Mesh(tubeGeo, tubeMat));
+
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(0.45, 0.95, 12), tubeMat);
+      cone.position.copy(endVec);
+      const dir = new THREE.Vector3().subVectors(endVec, curve.getPoint(0.86)).normalize();
+      cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+      live3DStage.add(cone);
+      return curve;
+    }
+
+    // Đặt xe lên Ngã tư Vuông ở 4 hướng chuẩn xác:
+    // 'S' (Nam - dưới phải nhìn lên), 'N' (Bắc - trên trái nhìn xuống), 'E' (Đông - trên phải nhìn sang trái), 'W' (Tây - dưới trái nhìn sang phải)
+    function spawnIntersectionVehicle(dirCode, vType, label, moveToDir, orderIndex, customColor = null) {
+      const startMap = {
+        S: { x: 2.8, z: 11.2, rotY: Math.PI },
+        N: { x: -2.8, z: -11.2, rotY: 0 },
+        E: { x: 11.2, z: -2.8, rotY: -Math.PI / 2 },
+        W: { x: -11.2, z: 2.8, rotY: Math.PI / 2 }
+      };
+      const endMap = {
+        N: new THREE.Vector3(2.8, 0.2, -10.5),
+        S: new THREE.Vector3(-2.8, 0.2, 10.5),
+        W: new THREE.Vector3(-10.5, 0.2, -2.8),
+        E: new THREE.Vector3(10.5, 0.2, 2.8)
+      };
+
+      const st = startMap[dirCode] || startMap.S;
+      const mesh = createDetailedVehicle3D(vType, customColor);
+      mesh.position.set(st.x, 0.16, st.z);
+      mesh.rotation.y = st.rotY;
+      live3DStage.add(mesh);
+
+      const startArrow = new THREE.Vector3(st.x, 0.2, st.z * 0.72);
+      const targetEnd = endMap[moveToDir] || endMap.N;
+      const arrowColors = [0x10b981, 0xf59e0b, 0x38bdf8, 0xec4899];
+      const curve = create3DRoadArrow(
+        new THREE.Vector3(st.x * 0.75, 0.2, st.z * 0.75),
+        targetEnd,
+        arrowColors[(orderIndex - 1) % 4]
+      );
+
+      add3DFloatingTag(`${orderIndex}. ${label}`, new THREE.Vector3(st.x, 3.4, st.z), '#fbbf24');
+
+      animatedStageVehicles.push({
+        mesh,
+        initPos: new THREE.Vector3(st.x, 0.16, st.z),
+        initRotY: st.rotY,
+        curve,
+        progress: 0,
+        delay: (orderIndex - 1) * 45
+      });
+    }
+
+    // HÀM DỰNG CẢNH 3D CHÍNH XÁC CHO MỌI CÂU HỎI TRONG 600 CÂU
+    function buildExact3DForQuestion(qObj) {
+      clearLive3DStage();
+      const num = qObj.num;
+      const qText = qObj.q || '';
+      const ansText = (qObj.options && qObj.options[qObj.correct]) ? qObj.options[qObj.correct] : '';
+      let desc3D = '';
+
+      // --- A. NHÓM CÂU HỎI SA HÌNH ĐẶC TRƯNG TRONG TÀI LIỆU CSGT ---
+      if (num === 486) {
+        // Câu 486: Ngã tư có đèn tín hiệu trên giá long môn
+        spawnIntersectionVehicle('W', 'bus', 'Xe khách (Rẽ trái - Đèn xanh: ĐÚNG)', 'N', 1, 0xca8a04);
+        spawnIntersectionVehicle('S', 'truck', 'Xe tải (Rẽ phải - Đèn xanh: ĐÚNG)', 'E', 1, 0x0284c7);
+        spawnIntersectionVehicle('E', 'moto', 'Xe mô tô (Rẽ phải - Đèn xanh: ĐÚNG)', 'N', 1, 0xef4444);
+        const wrongCar = createDetailedVehicle3D('sedan', 0x2563eb);
+        wrongCar.position.set(-11, 0.16, 5.2);
+        wrongCar.rotation.y = Math.PI / 2;
+        live3DStage.add(wrongCar);
+        add3DFloatingTag('❌ Xe con (Đi thẳng đèn đỏ: SAI)', new THREE.Vector3(-11, 3.0, 5.2), '#ef4444');
+        desc3D = 'Câu 486: Đã dựng đúng Ngã tư có đèn tín hiệu. Xe khách, Xe tải và Xe mô tô đi theo làn đèn xanh nên chấp hành đúng quy tắc giao thông.';
+      } else if (num === 487) {
+        spawnIntersectionVehicle('S', 'truck', 'Xe tải (Đường ưu tiên - Đi thẳng)', 'N', 1);
+        spawnIntersectionVehicle('N', 'moto', 'Xe mô tô (Đường ưu tiên - Rẽ trái)', 'E', 2);
+        spawnIntersectionVehicle('E', 'bus', 'Xe khách (Đường không ưu tiên - Đi thẳng)', 'W', 3);
+        spawnIntersectionVehicle('W', 'sedan', 'Xe con (Đường không ưu tiên - Rẽ trái)', 'N', 4);
+        create3DTrafficSignPole(6.8, 8.8, 'Đường ưu tiên', 'tri_yellow');
+        desc3D = 'Câu 487: Thứ tự đúng trên Ngã tư Vuông 3D: 1. Xe tải (đường ưu tiên đi thẳng) -> 2. Xe mô tô (đường ưu tiên rẽ trái) -> 3. Xe khách (đi thẳng) -> 4. Xe con (rẽ trái).';
+      } else if (num === 488) {
+        spawnIntersectionVehicle('N', 'police', 'Xe Công an (Ưu tiên số 1)', 'S', 1);
+        spawnIntersectionVehicle('S', 'sedan', 'Xe con (Đường ưu tiên)', 'W', 2);
+        spawnIntersectionVehicle('E', 'truck', 'Xe tải (Đi thẳng)', 'W', 3);
+        spawnIntersectionVehicle('W', 'bus', 'Xe khách (Rẽ trái)', 'N', 4);
+        desc3D = 'Câu 488: Thứ tự đúng: 1. Xe công an đi làm nhiệm vụ khẩn cấp -> 2. Xe con trên đường ưu tiên -> 3. Xe tải đi thẳng -> 4. Xe khách rẽ trái.';
+      } else if (num === 489) {
+        spawnIntersectionVehicle('S', 'police', 'Xe Công an (Ưu tiên số 1)', 'N', 1);
+        spawnIntersectionVehicle('E', 'truck', 'Xe tải (Đường ưu tiên)', 'S', 2);
+        spawnIntersectionVehicle('W', 'bus', 'Xe khách (Bên phải trống)', 'E', 3);
+        spawnIntersectionVehicle('N', 'sedan', 'Xe con (Nhường bên phải)', 'W', 4);
+        desc3D = 'Câu 489: Thứ tự đúng: 1. Xe công an -> 2. Xe tải (đường ưu tiên) -> 3. Xe khách (bên phải trống) -> 4. Xe con.';
+      } else if (num === 511 || num === 512 || num === 514 || num === 535 || num === 537) {
+        // Nhóm câu hỏi chọn hướng đi 1, 2, 3, 4 tại ngã tư
+        const mainVeh = createDetailedVehicle3D((num === 535 || num === 537) ? 'truck' : 'sedan');
+        mainVeh.position.set(2.8, 0.16, 11.2);
+        mainVeh.rotation.y = Math.PI;
+        live3DStage.add(mainVeh);
+
+        create3DRoadArrow(new THREE.Vector3(2.8, 0.2, 8), new THREE.Vector3(10.5, 0.2, 2.8), 0x10b981);
+        add3DFloatingTag('Hướng 1 (Rẽ phải)', new THREE.Vector3(10.5, 2.5, 2.8), '#10b981');
+
+        create3DRoadArrow(new THREE.Vector3(2.8, 0.2, 8), new THREE.Vector3(-2.8, 0.2, 10.5), 0xf59e0b);
+        add3DFloatingTag('Hướng 2 / 3 (Quay đầu / Rẽ trái)', new THREE.Vector3(-8.5, 2.5, 2.8), '#f59e0b');
+
+        create3DRoadArrow(new THREE.Vector3(2.8, 0.2, 8), new THREE.Vector3(2.8, 0.2, -10.5), 0x38bdf8);
+        add3DFloatingTag('Hướng Đi thẳng (Hướng 4)', new THREE.Vector3(2.8, 2.5, -10.5), '#38bdf8');
+
+        if (num === 512 || num === 537) create3DTrafficSignPole(6.8, 8.8, 'Cấm rẽ trái', 'circle_red');
+        if (num === 514) create3DTrafficSignPole(6.8, 8.8, 'Đi thẳng & Rẽ trái', 'circle_blue');
+        if (num === 535) create3DTrafficSignPole(2.8, -9.5, 'Hướng 4: Cấm ngược chiều', 'circle_red');
+
+        animatedStageVehicles.push({
+          mesh: mainVeh,
+          initPos: new THREE.Vector3(2.8, 0.16, 11.2),
+          initRotY: Math.PI,
+          curve: new THREE.QuadraticBezierCurve3(new THREE.Vector3(2.8, 0.2, 11.2), new THREE.Vector3(2.8, 0.2, 2), new THREE.Vector3(10.5, 0.2, 2.8)),
+          progress: 0,
+          delay: 0
+        });
+        desc3D = `Câu ${num}: Đã dựng xe 3D trước Ngã tư Vuông cùng các nhánh hướng đi 1, 2, 3, 4 và biển báo tương ứng của câu hỏi.`;
+      } else if (num === 536) {
+        spawnIntersectionVehicle('E', 'police', '1. Xe Công an (Ưu tiên)', 'W', 1);
+        spawnIntersectionVehicle('S', 'sedan', '2. Xe con (Đường ưu tiên)', 'N', 2);
+        spawnIntersectionVehicle('N', 'truck', '3. Xe tải (Đi thẳng)', 'S', 3);
+        spawnIntersectionVehicle('W', 'bus', '4. Xe khách (Rẽ trái)', 'N', 4);
+        desc3D = 'Câu 536: Thứ tự đúng: 1. Xe công an -> 2. Xe con -> 3. Xe tải -> 4. Xe khách.';
+      } else if (num >= 571 && num <= 600) {
+        // Nhóm câu hỏi xử lý tình huống giao thông thực tế (Câu 571 - 600)
+        const myCar = createDetailedVehicle3D('sedan', 0xf59e0b);
+        myCar.position.set(2.8, 0.16, 11.5);
+        myCar.rotation.y = Math.PI;
+        live3DStage.add(myCar);
+        add3DFloatingTag('🚘 Xe của bạn', new THREE.Vector3(2.8, 3.2, 11.5), '#f59e0b');
+
+        if (num === 572) {
+          spawnIntersectionVehicle('W', 'truck', 'Xe tải đi thẳng (Đi trước)', 'E', 1);
+          spawnIntersectionVehicle('S', 'bike', 'Xe đạp đi thẳng (Đi trước)', 'N', 1);
+          desc3D = 'Câu 572: Xe của bạn giảm tốc độ, nhường cho Xe tải và Xe đạp đi qua trước rồi mới rẽ phải.';
+        } else if (num === 573) {
+          const blueCar = createDetailedVehicle3D('sedan', 0x2563eb);
+          blueCar.position.set(2.8, 0.16, 5.5);
+          blueCar.rotation.y = Math.PI * 0.75;
+          live3DStage.add(blueCar);
+          add3DFloatingTag('🚙 Xe con màu xanh phía trước', new THREE.Vector3(2.8, 3.0, 5.5), '#3b82f6');
+          add3DFloatingTag('🚶 Người đi bộ đang sang đường', new THREE.Vector3(6.5, 2.5, 5.5), '#10b981');
+          desc3D = 'Câu 573: Giảm tốc độ, để người đi bộ qua đường và rẽ phải sau xe con màu xanh.';
+        } else if (num === 596) {
+          create3DTrafficSignPole(6.5, 4.5, 'Giao đường sắt', 'tri_yellow');
+          const bar = new THREE.Mesh(new THREE.BoxGeometry(10, 0.25, 0.25), new THREE.MeshStandardMaterial({ color: 0xef4444 }));
+          bar.position.set(0, 1.5, 3.5);
+          live3DStage.add(bar);
+          add3DFloatingTag('🚧 Rào chắn đường sắt đang đóng: Dừng lại!', new THREE.Vector3(0, 3.2, 3.5), '#ef4444');
+          desc3D = 'Câu 596: Dừng lại trước rào chắn đường sắt một khoảng cách an toàn.';
+        } else if (num === 597 || num === 598 || num === 599) {
+          const truck = createDetailedVehicle3D('truck', 0x0284c7);
+          truck.position.set(2.8, 0.16, -4.0);
+          truck.rotation.y = Math.PI;
+          live3DStage.add(truck);
+          const blueCar = createDetailedVehicle3D('sedan', 0x38bdf8);
+          blueCar.position.set(-1.5, 0.16, 2.5);
+          blueCar.rotation.y = Math.PI;
+          live3DStage.add(blueCar);
+          const redCar = createDetailedVehicle3D('sedan', 0xef4444);
+          redCar.position.set(2.8, 0.16, 8.5);
+          redCar.rotation.y = Math.PI;
+          live3DStage.add(redCar);
+          add3DFloatingTag(`Tình huống Câu ${num}: Quan sát làn đường & xe phía trước`, new THREE.Vector3(0, 3.6, 2), '#ef4444');
+          desc3D = `Câu ${num}: Đã dựng mô hình Xe tải, Xe con xanh và Xe con đỏ/vàng trên mặt đường 3D đúng theo hình vẽ.`;
+        } else if (num === 600) {
+          const cont = createDetailedVehicle3D('container', 0xd97706);
+          cont.position.set(2.5, 0.16, 3.2);
+          cont.rotation.y = Math.PI * 0.78;
+          live3DStage.add(cont);
+          const moto = createDetailedVehicle3D('moto', 0xef4444);
+          moto.position.set(4.5, 0.16, 9.5);
+          moto.rotation.y = Math.PI;
+          live3DStage.add(moto);
+          add3DFloatingTag('🚛 Xe Container đang rẽ phải (Không vượt!)', new THREE.Vector3(2.5, 3.8, 3.2), '#ef4444');
+          desc3D = 'Câu 600: Xe container đang rẽ phải, xe con xanh và xe máy phía sau giảm tốc độ chờ xe container rẽ xong rồi tiếp tục đi.';
+        } else {
+          create3DTrafficSignPole(6.5, 6.5, `Tình huống Câu ${num}`, 'rect_blue');
+          desc3D = `Câu ${num}: Đã dựng xe của bạn và bối cảnh giao thông tại nút giao vuông 3D.`;
+        }
+      }
+      // --- B. NHÓM BIỂN BÁO & VẠCH KẺ ĐƯỜNG (CÂU 301 - 485) ---
+      else if (num >= 301 && num <= 485) {
+        if (qObj.signLabels && qObj.signLabels.length > 0) {
+          const labels = qObj.signLabels;
+          const shapes = qObj.signShapes || ['circle_red', 'circle_red', 'circle_red'];
+          const spacing = 4.6;
+          const startX = -((labels.length - 1) * spacing) / 2;
+          labels.forEach((lb, i) => {
+            create3DTrafficSignPole(startX + i * spacing, -4.5, lb, shapes[i] || 'circle_red');
+          });
+        } else if (num >= 476 && num <= 485) {
+          create3DTrafficSignPole(-4.5, -4.5, 'Vạch 1', 'rect_dark');
+          create3DTrafficSignPole(0, -4.5, 'Vạch 2 (Tim đường)', 'rect_striped');
+          create3DTrafficSignPole(4.5, -4.5, 'Vạch 3', 'rect_dark');
+        } else {
+          create3DTrafficSignPole(-4.5, -4.5, `Biển 1 (Câu ${num})`, 'circle_red');
+          create3DTrafficSignPole(0, -4.5, `Biển 2 (Câu ${num})`, 'tri_yellow');
+          create3DTrafficSignPole(4.5, -4.5, `Biển 3 (Câu ${num})`, 'rect_blue');
+        }
+        const car = createDetailedVehicle3D('sedan', 0x38bdf8);
+        car.position.set(2.8, 0.16, 8.5);
+        car.rotation.y = Math.PI;
+        live3DStage.add(car);
+        desc3D = `Câu ${num}: Đã dựng các cột Biển báo / Vạch kẻ đường 3D trên Ngã tư Vuông. Đáp án đúng: ${ansText}`;
+      }
+      // --- C. BỘ PHÂN TÍCH TỰ ĐỘNG CHO TẤT CẢ CÁC CÂU CÒN LẠI TRONG 600 CÂU ---
+      else {
+        const lowerQ = (qText + ' ' + ansText).toLowerCase();
+        const dirs = ['S', 'E', 'N', 'W'];
+        let vIdx = 0;
+
+        const checkAndSpawn = (kw, type, name) => {
+          if (lowerQ.includes(kw) && vIdx < 4) {
+            const d = dirs[vIdx];
+            const target = dirs[(vIdx + 2) % 4];
+            spawnIntersectionVehicle(d, type, name, target, vIdx + 1);
+            vIdx++;
+          }
+        };
+
+        checkAndSpawn('công an', 'police', 'Xe Công an');
+        checkAndSpawn('chữa cháy', 'firetruck', 'Xe Chữa cháy');
+        checkAndSpawn('cứu thương', 'ambulance', 'Xe Cứu thương');
+        checkAndSpawn('xe tải', 'truck', 'Xe Ô tô tải');
+        checkAndSpawn('xe khách', 'bus', 'Xe Ô tô khách');
+        checkAndSpawn('xe buýt', 'bus', 'Xe Buýt');
+        checkAndSpawn('xe mô tô', 'moto', 'Xe Mô tô');
+        checkAndSpawn('xe con', 'sedan', 'Xe Ô tô con');
+
+        if (vIdx === 0) {
+          spawnIntersectionVehicle('S', 'sedan', `Xe minh họa Câu ${num}`, 'N', 1, 0x38bdf8);
+        }
+        create3DTrafficSignPole(6.8, -5.5, `Câu ${num} / 600`, 'rect_blue');
+        desc3D = `Câu ${num}: Đã mô phỏng phương tiện & quy tắc giao thông trên Ngã tư Vuông 3D theo đúng nội dung câu hỏi.`;
+      }
+
+      document.getElementById('qd-3d-desc').textContent = desc3D;
+    }
+
+    function resetCurrent3DStage() {
+      isRunning3DTraffic = false;
+      trafficTick = 0;
+      animatedStageVehicles.forEach(item => {
+        item.progress = 0;
+        if (item.initPos) item.mesh.position.copy(item.initPos);
+        if (typeof item.initRotY === 'number') item.mesh.rotation.y = item.initRotY;
+      });
+    }
+
+    function play3DTrafficAnimation() {
+      resetCurrent3DStage();
+      playBeep(760, 0.1);
+      isRunning3DTraffic = true;
+    }
+
+    // =========================================================================
+    // 6. CHUYỂN KHU VỰC TỨC THÌ & CHẾ ĐỘ THI THỬ SÁT HẠCH (20 PHÚT)
+    // =========================================================================
+    let currentQuizZone = ZONES_DATA[5]; // Mặc định mở Chương VI (Sa hình)
+    let currentQIndex = 0;
+    let isExamMode = false;
+    let examAnswers = {};
+    let examSubmitted = false;
+    let examTimerInterval = null;
+    let examSecondsLeft = 1200; // 20 phút = 1200 giây
+
+    // Khi bấm vào bất kỳ Khu vực nào -> Chuyển ngay câu hỏi sang Khu vực đó!
+    function selectZone(zoneId) {
+      const zone = ZONES_DATA.find(z => z.id === zoneId);
+      if (!zone) return;
+      playBeep(620, 0.08);
+
+      // Cập nhật trạng thái nút chọn trên thanh chip & nhãn 3D
+      document.querySelectorAll('#filter-bar .chip').forEach(c => c.classList.remove('active'));
+      const chipEl = document.getElementById(`chip-${zoneId}`);
+      if (chipEl) chipEl.classList.add('active');
+
+      document.querySelectorAll('.zone-label').forEach(lb => lb.classList.remove('active-zone'));
+      if (zone.labelEl) zone.labelEl.classList.add('active-zone');
+
+      if (zoneId === 'exam_zone') {
+        startNewMockExam();
+        return;
+      }
+
+      // Chế độ ôn tập theo khu vực: chuyển ngay câu hỏi sang khu vực vừa bấm
+      isExamMode = false;
+      clearInterval(examTimerInterval);
+      document.getElementById('exam-bar').classList.remove('active');
+
+      currentQuizZone = zone;
+      currentQIndex = 0;
+      populateJumpMenu();
+      renderQuestion();
+
+      document.getElementById('driver-status').textContent = `Đang mở: ${zone.name} (${zone.questions.length} câu)`;
+      setCameraMode('stage3d');
+    }
+
+    // Khởi tạo bài Thi Thử Sát Hạch (Rút ngẫu nhiên câu hỏi từ 6 Chương + Điểm liệt)
+    function startNewMockExam() {
+      isExamMode = true;
+      examSubmitted = false;
+      examAnswers = {};
+      examSecondsLeft = 1200;
+
+      // Gom toàn bộ câu hỏi từ 6 chương để rút đề thi thử (tối đa 30 câu)
+      const allPool = [];
+      ZONES_DATA.forEach(z => {
+        if (z.id !== 'exam_zone') {
+          z.questions.forEach(q => {
+            if (!allPool.some(existing => existing.num === q.num)) {
+              allPool.push(q);
+            }
+          });
+        }
+      });
+
+      const criticalPool = allPool.filter(q => q.critical);
+      const normalPool = allPool.filter(q => !q.critical);
+
+      const shuffle = (arr) => arr.slice().sort(() => Math.random() - 0.5);
+      const pickedCrit = shuffle(criticalPool).slice(0, 3);
+      const pickedNorm = shuffle(normalPool).slice(0, 27);
+      const examQuestions = shuffle([...pickedCrit, ...pickedNorm]).sort((a, b) => a.num - b.num);
+
+      const examZone = ZONES_DATA.find(z => z.id === 'exam_zone');
+      examZone.questions = examQuestions;
+      currentQuizZone = examZone;
+      currentQIndex = 0;
+
+      document.getElementById('exam-bar').classList.add('active');
+      document.getElementById('btn-submit-exam').style.display = 'inline-flex';
+      document.getElementById('exam-status-text').textContent = `🏆 Đề Thi Thử (${examQuestions.length} câu)`;
+      document.getElementById('driver-status').textContent = `Đang trong Khu Thi Thử Sát Hạch · Thời gian: 20 phút`;
+
+      clearInterval(examTimerInterval);
+      examTimerInterval = setInterval(() => {
+        if (examSubmitted) return;
+        examSecondsLeft--;
+        const m = String(Math.floor(examSecondsLeft / 60)).padStart(2, '0');
+        const s = String(examSecondsLeft % 60).padStart(2, '0');
+        document.getElementById('exam-timer-display').textContent = `${m}:${s}`;
+        if (examSecondsLeft <= 0) {
+          submitMockExam();
+        }
+      }, 1000);
+
+      populateJumpMenu();
+      renderExamDots();
+      renderQuestion();
+      setCameraMode('stage3d');
+    }
+
+    function renderExamDots() {
+      const grid = document.getElementById('exam-grid-dots');
+      grid.innerHTML = '';
+      currentQuizZone.questions.forEach((q, idx) => {
+        const dot = document.createElement('div');
+        dot.className = 'exam-dot';
+        if (idx === currentQIndex) dot.classList.add('current');
+        if (examSubmitted) {
+          if (examAnswers[idx] === q.correct) dot.classList.add('correct-dot');
+          else dot.classList.add('wrong-dot');
+        } else if (examAnswers[idx] !== undefined) {
+          dot.classList.add('answered');
+        }
+        dot.textContent = idx + 1;
+        dot.onclick = () => {
+          currentQIndex = idx;
+          renderExamDots();
+          renderQuestion();
+        };
+        grid.appendChild(dot);
+      });
+    }
+
+    function submitMockExam() {
+      examSubmitted = true;
+      clearInterval(examTimerInterval);
+
+      let correctCount = 0;
+      let failedCritical = false;
+      const total = currentQuizZone.questions.length;
+
+      currentQuizZone.questions.forEach((q, idx) => {
+        if (examAnswers[idx] === q.correct) {
+          correctCount++;
+        } else if (q.critical) {
+          failedCritical = true;
+        }
+      });
+
+      const passRequired = Math.ceil(total * 0.85);
+      const isPass = (correctCount >= passRequired) && !failedCritical;
+
+      const statusEl = document.getElementById('exam-status-text');
+      if (isPass) {
+        statusEl.innerHTML = `✅ KẾT QUẢ: ĐẠT (${correctCount}/${total} câu đúng)`;
+        statusEl.style.color = '#4ade80';
+      } else {
+        const reason = failedCritical ? 'Sai câu Điểm liệt!' : `Chưa đủ ${passRequired}/${total} câu`;
+        statusEl.innerHTML = `❌ KÔNG ĐẠT: ${correctCount}/${total} (${reason})`;
+        statusEl.style.color = '#fca5a5';
+      }
+
+      document.getElementById('btn-submit-exam').style.display = 'none';
+      renderExamDots();
+      renderQuestion();
+    }
+
+    function populateJumpMenu() {
+      const jumpSel = document.getElementById('qd-jump');
+      jumpSel.innerHTML = '';
+      currentQuizZone.questions.forEach((q, idx) => {
+        const opt = document.createElement('option');
+        opt.value = idx;
+        opt.textContent = isExamMode ? `Câu ${idx + 1} (Đề #${q.num})` : `Câu ${q.num}${q.critical ? ' ⚠️' : ''}`;
+        jumpSel.appendChild(opt);
+      });
+    }
+
+    function jumpToQuestion(idx) {
+      currentQIndex = parseInt(idx, 10) || 0;
+      if (isExamMode) renderExamDots();
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      const qObj = currentQuizZone.questions[currentQIndex];
+      if (!qObj) return;
+
+      document.getElementById('qd-zone-title').textContent = currentQuizZone.shortName;
+      document.getElementById('qd-jump').value = currentQIndex;
+      document.getElementById('qd-num').textContent = isExamMode
+        ? `Câu ${currentQIndex + 1}/${currentQuizZone.questions.length} (Gốc: Câu ${qObj.num})`
+        : `Câu ${qObj.num} / 600`;
+      document.getElementById('qd-critical').style.display = qObj.critical ? 'inline-block' : 'none';
+      document.getElementById('qd-question').textContent = qObj.q;
+      document.getElementById('qd-progress').textContent = `${currentQIndex + 1} / ${currentQuizZone.questions.length}`;
+
+      // Dựng cảnh 3D chính xác cho câu hỏi hiện tại (Xe đứng yên đúng vị trí xuất phát)
+      buildExact3DForQuestion(qObj);
+
+      const explainEl = document.getElementById('qd-explain');
+      const optionsContainer = document.getElementById('qd-options');
+      optionsContainer.innerHTML = '';
+
+      if (isExamMode && !examSubmitted) {
+        explainEl.style.display = 'none';
+        qObj.options.forEach((optText, idx) => {
+          const btn = document.createElement('button');
+          btn.className = 'option-btn';
+          if (examAnswers[currentQIndex] === idx) btn.classList.add('selected-exam');
+          btn.textContent = optText;
+          btn.onclick = () => {
+            examAnswers[currentQIndex] = idx;
+            playBeep(600, 0.06);
+            renderExamDots();
+            renderQuestion();
+          };
+          optionsContainer.appendChild(btn);
+        });
+      } else {
+        // Chế độ Ôn tập theo chương hoặc Xem lại sau khi nộp bài Thi Thử
+        const userPicked = isExamMode ? examAnswers[currentQIndex] : undefined;
+        explainEl.style.display = isExamMode ? 'block' : 'none';
+        explainEl.textContent = qObj.explain;
+
+        qObj.options.forEach((optText, idx) => {
+          const btn = document.createElement('button');
+          btn.className = 'option-btn';
+          btn.textContent = optText;
+
+          if (isExamMode && examSubmitted) {
+            btn.disabled = true;
+            if (idx === qObj.correct) btn.classList.add('correct');
+            else if (idx === userPicked) btn.classList.add('wrong');
+          } else {
+            btn.onclick = () => checkAnswer(idx, btn, qObj);
+          }
+          optionsContainer.appendChild(btn);
+        });
+      }
+    }
+
+    function checkAnswer(selectedIndex, clickedBtn, qObj) {
+      const allBtns = document.querySelectorAll('#qd-options .option-btn');
+      allBtns.forEach((b, idx) => {
+        b.disabled = true;
+        if (idx === qObj.correct) b.classList.add('correct');
+      });
+
+      if (selectedIndex === qObj.correct) {
+        playBeep(880, 0.15);
+      } else {
+        clickedBtn.classList.add('wrong');
+        playBeep(240, 0.25);
+      }
+      document.getElementById('qd-explain').style.display = 'block';
+      // Sau khi trả lời xong mới cho các xe 3D lăn bánh theo đúng thứ tự đáp án!
+      play3DTrafficAnimation();
+    }
+
+    function prevQuestion() {
+      if (currentQIndex > 0) {
+        currentQIndex--;
+        if (isExamMode) renderExamDots();
+        renderQuestion();
+      }
+    }
+
+    function nextQuestion() {
+      if (currentQIndex < currentQuizZone.questions.length - 1) {
+        currentQIndex++;
+      } else {
+        currentQIndex = 0;
+      }
+      if (isExamMode) renderExamDots();
+      renderQuestion();
+    }
+
+    // =========================================================================
+    // 7. QUÉT TỰ ĐỘNG ĐỦ 600 CÂU HỎI TỪ FILE PDF TRÊN MACBOOK
+    // =========================================================================
+    async function importFullPDF(inputEl) {
+      const file = inputEl.files && inputEl.files[0];
+      if (!file) return;
+      const statusEl = document.getElementById('driver-status');
+      statusEl.textContent = '⏳ Đang quét toàn bộ 600 câu hỏi từ file PDF...';
+
+      try {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+        let fullText = '';
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+          statusEl.textContent = `⏳ Đang đọc trang ${pageNum}/${pdf.numPages} (600 câu hỏi)...`;
+          const page = await pdf.getPage(pageNum);
+          const content = await page.getTextContent();
+          fullText += '\n' + content.items.map(item => item.str).join(' ');
+        }
+
+        const regex = /Câu\s+(\d+)[\.\:]\s*([\s\S]*?)(?=Câu\s+\d+[\.\:]|$)/g;
+        let match;
+        let added = 0;
+
+        while ((match = regex.exec(fullText)) !== null) {
+          const qNum = parseInt(match[1], 10);
+          if (qNum < 1 || qNum > 600) continue;
+
+          const block = match[2].trim();
+          const parts = block.split(/(?=\b[1-4]\.\s)/);
+          const qStem = `Câu ${qNum}. ` + (parts[0] || '').replace(/\s+/g, ' ').trim();
+          const opts = parts.slice(1).map(o => o.replace(/\s+/g, ' ').trim()).filter(Boolean);
+
+          if (opts.length >= 2) {
+            let zId = 'ch1';
+            if (qNum >= 181 && qNum <= 205) zId = 'ch2';
+            else if (qNum >= 206 && qNum <= 263) zId = 'ch3';
+            else if (qNum >= 264 && qNum <= 300) zId = 'ch4';
+            else if (qNum >= 301 && qNum <= 485) zId = 'ch5';
+            else if (qNum >= 486) zId = 'ch6';
+
+            const targetZone = ZONES_DATA.find(z => z.id === zId);
+            if (targetZone && !targetZone.questions.some(ex => ex.num === qNum)) {
+              targetZone.questions.push({
+                num: qNum,
+                critical: false,
+                q: qStem,
+                options: opts,
+                correct: 0,
+                explain: `Câu ${qNum} trong Bộ 600 câu hỏi sát hạch lái xe CSGT.`
+              });
+              added++;
+            }
+          }
+        }
+
+        ZONES_DATA.forEach(z => {
+          if (z.id !== 'exam_zone') {
+            z.questions.sort((a, b) => a.num - b.num);
+            if (z.labelEl) {
+              z.labelEl.innerHTML = `${z.shortName}<span>${z.questions.length} câu · Bấm để làm bài ngay</span>`;
+            }
+          }
+        });
+
+        populateJumpMenu();
+        renderQuestion();
+        statusEl.textContent = `🎉 Đã nạp bổ sung ${added} câu từ PDF! Bấm vào bất kỳ khu vực nào để làm bài!`;
+      } catch (e) {
+        alert('Không thể đọc file PDF. Hãy chọn đúng file PDF 600 câu hỏi trên máy của bạn.');
+      }
+    }
+
+    // =========================================================================
+    // 8. ĐIỀU KHIỂN CAMERA & VÒNG LẶP DỰNG HÌNH (KHÔNG CÓ XE CHẠY NGẪU NHIÊN)
+    // =========================================================================
+    let labelsVisible = true;
+    let targetCamPos = new THREE.Vector3(-14, 18, 22);
+    let targetLookAt = new THREE.Vector3(0, 0.8, 0);
+    let isAnimatingCamera = false;
+    let soundEnabled = false;
+
+    function playBeep(freq = 520, duration = 0.08) {
+      if (!soundEnabled) return;
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.frequency.value = freq;
+        gain.gain.value = 0.05;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function startApp(withSound, openExamImmediately = false) {
+      soundEnabled = withSound;
+      document.getElementById('splash-screen').classList.add('hidden');
+      if (openExamImmediately) {
+        selectZone('exam_zone');
+      } else {
+        selectZone('ch6');
+      }
+    }
+
+    function moveCameraTo(pos, look) {
+      targetCamPos.copy(pos);
+      targetLookAt.copy(look);
+      isAnimatingCamera = true;
+      setTimeout(() => { isAnimatingCamera = false; }, 900);
+    }
+
+    function setCameraMode(mode) {
+      playBeep(480, 0.06);
+      document.querySelectorAll('#top-ui .btn').forEach(b => {
+        if (b.id.startsWith('cam-')) b.classList.remove('active');
+      });
+      const activeBtn = document.getElementById(`cam-${mode}`);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      if (mode === 'overview') {
+        moveCameraTo(new THREE.Vector3(0, 46, 64), new THREE.Vector3(0, 0, 0));
+      } else if (mode === 'stage3d') {
+        moveCameraTo(new THREE.Vector3(-15, 18, 22), new THREE.Vector3(0, 0.8, 0));
+      } else if (mode === 'cockpit') {
+        moveCameraTo(new THREE.Vector3(2.8, 1.72, 14.6), new THREE.Vector3(2.8, 1.4, -10));
+      } else if (mode === 'top') {
+        moveCameraTo(new THREE.Vector3(0, 52, 0.1), new THREE.Vector3(0, 0, 0));
+      }
+    }
+
+    function toggleLabels() {
+      labelsVisible = !labelsVisible;
+      document.getElementById('btn-toggle-labels').classList.toggle('active', labelsVisible);
+      labelsLayer.style.display = labelsVisible ? 'block' : 'none';
+      stageTagsLayer.style.display = labelsVisible ? 'block' : 'none';
+    }
+
+    // Bấm chuột trực tiếp vào Khu vực vuông 3D -> Chuyển câu hỏi sang khu đó ngay lập tức
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    let pointerDownPos = { x: 0, y: 0 };
+
+    renderer.domElement.addEventListener('pointerdown', (e) => {
+      pointerDownPos = { x: e.clientX, y: e.clientY };
+    });
+
+    renderer.domElement.addEventListener('pointerup', (e) => {
+      const dist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
+      if (dist > 6) return;
+
+      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(zoneHitMeshes);
+      if (intersects.length > 0 && intersects[0].object.userData.zoneId) {
+        selectZone(intersects[0].object.userData.zoneId);
+      }
+    });
+
+    function updateAllFloatingLabels() {
+      if (!labelsVisible) return;
+      ZONES_DATA.forEach(zone => {
+        const pos = new THREE.Vector3(zone.pos.x, 6.2, zone.pos.z);
+        pos.project(camera);
+        if (pos.z > 1) {
+          zone.labelEl.style.display = 'none';
+        } else {
+          zone.labelEl.style.display = 'block';
+          zone.labelEl.style.left = `${(pos.x * 0.5 + 0.5) * window.innerWidth}px`;
+          zone.labelEl.style.top = `${(-(pos.y * 0.5) + 0.5) * window.innerHeight}px`;
+        }
+      });
+
+      stageFloatingTags.forEach(tag => {
+        const p = tag.pos.clone().project(camera);
+        if (p.z > 1) {
+          tag.el.style.display = 'none';
+        } else {
+          tag.el.style.display = 'block';
+          tag.el.style.left = `${(p.x * 0.5 + 0.5) * window.innerWidth}px`;
+          tag.el.style.top = `${(-(p.y * 0.5) + 0.5) * window.innerHeight}px`;
+        }
+      });
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      // Xe trên Ngã tư Vuông hoàn toàn ĐỨNG YÊN đúng vị trí đề bài, chỉ chạy theo thứ tự đáp án khi bấm nút hoặc sau khi chọn đáp án!
+      if (isRunning3DTraffic) {
+        trafficTick++;
+        animatedStageVehicles.forEach(item => {
+          if (item.curve && trafficTick > item.delay && item.progress < 1) {
+            item.progress = Math.min(1, item.progress + 0.012);
+            const pt = item.curve.getPoint(item.progress);
+            item.mesh.position.set(pt.x, 0.16, pt.z);
+            if (item.progress < 0.98) {
+              const nextPt = item.curve.getPoint(item.progress + 0.02);
+              item.mesh.lookAt(nextPt.x, 0.16, nextPt.z);
+            }
+          }
+        });
+      }
+
+      if (isAnimatingCamera) {
+        camera.position.lerp(targetCamPos, 0.08);
+        controls.target.lerp(targetLookAt, 0.08);
+      }
+
+      controls.update();
+      updateAllFloatingLabels();
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
